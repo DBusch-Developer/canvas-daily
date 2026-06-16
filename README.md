@@ -107,6 +107,18 @@ Green — after writing the models, engine, encrypted-token column, and report q
 
 ![ORM tests passing — six green passes](docs/test-evidence/models-green.png)
 
+**Layer 5 — end-to-end (the full user flow)**
+
+Drives the whole product: sign up, log in, add a connection, view the grouped report, open a stored detail page, and press "Break this down" for the AI breakdown. Plus two guardrails — the detail page renders from stored data with **no live Canvas call**, and a logged-out user is **blocked from the report** (and from another user's assignment). Runs against the Neon test branch; skips in CI without it.
+
+Red — the web app and auth module don't exist yet:
+
+![E2E tests failing — collection error, modules missing](docs/test-evidence/e2e-red.png)
+
+Green — after writing the FastAPI app, auth, sessions, and the Jinja2 pages:
+
+![E2E tests passing — eight green passes](docs/test-evidence/e2e-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Security

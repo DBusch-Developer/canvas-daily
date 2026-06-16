@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Your report · Canvas Daily{% endblock %}
+{% block body %}
+  <h1>Your report</h1>
+  <p class="meta"><a href="/connections/new">Add connection</a> · <form method="post" action="/logout" style="display:inline"><button type="submit">Log out</button></form></p>
+
+  {% for key, title in [('past_due', 'Past due'), ('due_today', 'Due today'), ('upcoming', 'Upcoming')] %}
+    <h2>{{ title }}</h2>
+    {% if buckets[key] %}
+      <ul>
+        {% for a in buckets[key] %}
+          <li><a href="/assignments/{{ a.id }}">{{ a.name }}</a> <span class="meta">— due {{ a.due_at }}</span></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="meta">Nothing here.</p>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

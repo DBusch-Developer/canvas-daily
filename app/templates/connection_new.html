@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Add connection · Canvas Daily{% endblock %}
+{% block body %}
+  <h1>Add a Canvas connection</h1>
+  <form method="post" action="/connections">
+    <input name="label" placeholder="Label (e.g. Mine, Kid A)" required>
+    <input name="base_url" placeholder="Canvas base URL (https://school.instructure.com)" required>
+    <select name="account_type">
+      <option value="student">student</option>
+      <option value="observer">observer</option>
+    </select>
+    <input name="access_token" type="password" placeholder="Access token" required>
+    <button type="submit">Add connection</button>
+  </form>
+  <p class="meta"><a href="/">Back to report</a></p>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Study breakdown · {{ a.name }}{% endblock %}
+{% block body %}
+  <p class="meta"><a href="/assignments/{{ a.id }}">← Back to assignment</a></p>
+  <h1>Study breakdown</h1>
+  <h2 style="border:0">{{ a.name }}</h2>
+
+  {% if error %}
+    <p class="error">{{ error }}</p>
+  {% else %}
+    {# Markdown text shown as-is for now; HTML rendering is a later polish. #}
+    <pre>{{ markdown }}</pre>
+  {% endif %}
+{% endblock %}
