@@ -75,6 +75,16 @@ Green — after writing `classify_due`:
 
 ![Date tests passing — six green passes](docs/test-evidence/dates-green.png)
 
+**Layer 2 — Canvas fetch (Canvas mocked at the httpx transport)**
+
+Red — the five behaviors written against an empty stub: pagination, `include[]=submission` parsing, HTML sanitization, null-score preservation, core field parsing:
+
+![Canvas fetch tests failing — five red failures](docs/test-evidence/canvas-red.png)
+
+Green — after writing `fetch_assignments`:
+
+![Canvas fetch tests passing — five green passes](docs/test-evidence/canvas-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Security
