@@ -12,4 +12,6 @@ def make_engine(url=None):
     # SQLAlchemy needs an explicit driver; Neon hands out plain postgresql:// URLs.
     if url.startswith("postgresql://"):
         url = "postgresql+psycopg://" + url[len("postgresql://"):]
-    return create_engine(url)
+    # SQLite (local dev only) is served across FastAPI's threadpool.
+    connect_args = {"check_same_thread": False} if url.startswith("sqlite") else {}
+    return create_engine(url, connect_args=connect_args)

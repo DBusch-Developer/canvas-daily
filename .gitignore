@@ -12,6 +12,9 @@ htmlcov/
 # Playwright MCP scratch output (snapshots, console logs)
 .playwright-mcp/
 
+# Local dev database
+*.db
+
 # Secrets & env
 .env
 *.env
