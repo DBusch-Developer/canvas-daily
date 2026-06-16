@@ -1,0 +1,24 @@
+#!/bin/sh
+# Blocks a commit unless: every test layer has its red/green screenshots
+# (documented in the README) AND the test suite passes.
+#
+# Enabled per-clone with:  git config core.hooksPath .githooks
+# Bypass intentionally with: git commit --no-verify
+
+set -e
+
+if [ -x ".venv/Scripts/python.exe" ]; then
+  PY=".venv/Scripts/python.exe"
+elif [ -x ".venv/bin/python" ]; then
+  PY=".venv/bin/python"
+else
+  PY="python"
+fi
+
+echo "[pre-commit] checking test evidence..."
+"$PY" tools/check_evidence.py
+
+echo "[pre-commit] running tests..."
+"$PY" -m pytest -q
+
+echo "[pre-commit] ok"
