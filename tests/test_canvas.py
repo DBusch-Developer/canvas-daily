@@ -35,6 +35,8 @@ def test_parses_core_assignment_fields():
     assert a["name"] == "Essay 1"
     assert a["points_possible"] == 100
     assert isinstance(a["due_at"], datetime) and a["due_at"].year == 2026
+    # No submission in the payload → flags default to False, never None.
+    assert a["late"] is False and a["missing"] is False and a["excused"] is False
     # The token rides in the Authorization header, never the URL.
     assert captured[0].headers["Authorization"] == "Bearer secret-token"
 

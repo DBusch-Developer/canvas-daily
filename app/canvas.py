@@ -32,6 +32,27 @@ def fetch_assignments(base_url, token, course_id, client):
     return assignments
 
 
+def fetch_courses(base_url, token, client):
+    """Return the token-user's active courses (id + name), across all pages.
+
+    The daily job walks these to fetch assignments per course — there is no
+    single Canvas endpoint for every assignment with submission state.
+    """
+    url = f"{base_url}/api/v1/courses"
+    params = {"enrollment_state": "active", "per_page": 100}
+    headers = {"Authorization": f"Bearer {token}"}
+
+    courses = []
+    while url:
+        response = client.get(url, params=params, headers=headers)
+        response.raise_for_status()
+        courses.extend({"id": c.get("id"), "name": c.get("name")} for c in response.json())
+        url = _next_page(response)
+        params = None
+
+    return courses
+
+
 def _parse(raw):
     submission = raw.get("submission") or {}
     return {
@@ -45,9 +66,10 @@ def _parse(raw):
         "workflow_state": submission.get("workflow_state"),
         "score": submission.get("score"),  # null until graded — kept as None
         "submitted_at": _parse_dt(submission.get("submitted_at")),
-        "late": submission.get("late"),
-        "missing": submission.get("missing"),
-        "excused": submission.get("excused"),
+        # No submission means not late / not missing / not excused.
+        "late": submission.get("late", False),
+        "missing": submission.get("missing", False),
+        "excused": submission.get("excused", False),
     }
 
 

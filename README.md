@@ -60,6 +60,7 @@ TDD throughout — red, green, refactor — layered inside-out:
 3. **AI breakdown** — Groq mocked. Context assembly, four-section output, timeout → 504, no key in logs.
 4. **ORM integration** — real Neon test branch. One-to-many model, round-trip, report query.
 5. **End-to-end** — sign up, add connection, view report, click into detail, generate breakdown.
+6. **Daily sync** — Canvas mocked. Per-connection course walk, store full detail, upsert (no duplicates), one path for one connection or many.
 
 ### Test evidence
 
@@ -118,6 +119,18 @@ Red — the web app and auth module don't exist yet:
 Green — after writing the FastAPI app, auth, sessions, and the Jinja2 pages:
 
 ![E2E tests passing — eight green passes](docs/test-evidence/e2e-green.png)
+
+**Layer 6 — daily sync job (Canvas mocked, stored to the Neon test branch)**
+
+The pre-fetch that fills storage: for every connection, list its active courses, fetch each course's assignments, and store full detail — so detail pages later read from storage with no live call. Four behaviors: course pagination, storing across a connection's courses, idempotent **upsert** (re-runs update, never duplicate), and one path that covers one connection or many.
+
+Red — the sync module and `fetch_courses` don't exist yet:
+
+![Daily sync tests failing — collection error, modules missing](docs/test-evidence/sync-red.png)
+
+Green — after writing `fetch_courses`, `sync_connection`, and `run_daily_sync`:
+
+![Daily sync tests passing — four green passes](docs/test-evidence/sync-green.png)
 
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
