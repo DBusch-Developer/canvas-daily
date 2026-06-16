@@ -147,6 +147,24 @@ Green — after writing `build_report_email`, `send_email`, and `send_daily_repo
 
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
+## Running the daily jobs
+
+Two cron entry points wire the tested cores to real resources (DB session, HTTP client, SMTP). They read config from the environment and run nothing locally by accident — `DATABASE_URL` must point at production, not the test branch.
+
+```
+python -m app.jobs sync    # fetch + store every connection's assignments
+python -m app.jobs email   # send each user their grouped daily report
+```
+
+Example crontab (UTC):
+
+```
+0 6 * * *  cd /app && python -m app.jobs sync
+0 7 * * *  cd /app && python -m app.jobs email
+```
+
+The email job also needs `SMTP_HOST` / `SMTP_PORT` / `SMTP_USERNAME` / `SMTP_PASSWORD` / `SMTP_FROM`.
+
 ## Security
 
 - Access tokens are **encrypted at rest** — never stored, printed, or logged in plaintext.
