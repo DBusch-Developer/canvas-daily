@@ -95,6 +95,18 @@ Green — after writing `generate_breakdown` and the `/breakdown` endpoint:
 
 ![AI breakdown tests passing — eight green passes](docs/test-evidence/ai-green.png)
 
+**Layer 4 — ORM integration (real Neon test branch)**
+
+These run against a live Postgres branch, so they need `TEST_DATABASE_URL` set in `.env` (and skip cleanly without it). Six behaviors: a user owns many connections, a connection owns many assignments, deleting a connection cascades to its assignments, stored detail round-trips field-for-field, the access token is **encrypted at rest** (raw column is ciphertext), and the report query groups by status and sorts by due date.
+
+Red — the ORM modules don't exist yet (an honest feature-missing red rather than a faked stub schema):
+
+![ORM tests failing — collection error, modules missing](docs/test-evidence/models-red.png)
+
+Green — after writing the models, engine, encrypted-token column, and report query:
+
+![ORM tests passing — six green passes](docs/test-evidence/models-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Security
