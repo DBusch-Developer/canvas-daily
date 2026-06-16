@@ -33,6 +33,10 @@ def run_pytest(pytest_args: list[str]) -> tuple[str, int]:
 def to_html(label: str, raw_output: str) -> str:
     """Wrap the colored pytest output in a small terminal-styled page."""
     conv = Ansi2HTMLConverter(dark_bg=True, scheme="xterm", line_wrap=False)
+    # full=False yields the colored spans WITHOUT a wrapping element, so we wrap
+    # them ourselves in <pre class="term"> below. The default text color lives on
+    # that wrapper — otherwise un-colored text falls back to the browser default
+    # (black) and vanishes against the dark background.
     body = conv.convert(raw_output, full=False)
     styles = conv.produce_headers()
     return f"""<!doctype html>
@@ -52,10 +56,11 @@ def to_html(label: str, raw_output: str) -> str:
   }}
   .titlebar .dot {{ display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:7px; vertical-align:middle; }}
   .dot.r {{ background:#ff5f56; }} .dot.y {{ background:#ffbd2e; }} .dot.g {{ background:#27c93f; }}
-  pre.ansi2html-content {{
+  pre.term {{
+    display: block;  /* override ansi2html's inline default so padding/bg apply */
     margin: 0; padding: 18px 16px 22px;
     background: #0c0c0c; border-radius: 0 0 8px 8px;
-    color: #d4d4d4;  /* brighten un-colored text; red/green spans keep their own color */
+    color: #d4d4d4;  /* default for un-colored text; red/green spans keep their own color */
     font: 14px/1.5 "Cascadia Code", "Consolas", ui-monospace, monospace;
     white-space: pre; overflow-x: auto;
   }}
@@ -64,7 +69,7 @@ def to_html(label: str, raw_output: str) -> str:
 <body>
   <div class="frame">
     <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>pytest — {label}</div>
-    {body}
+    <pre class="term">{body}</pre>
   </div>
 </body>
 </html>"""

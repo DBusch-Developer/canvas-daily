@@ -1118,10 +1118,11 @@
   }
   .titlebar .dot { display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:7px; vertical-align:middle; }
   .dot.r { background:#ff5f56; } .dot.y { background:#ffbd2e; } .dot.g { background:#27c93f; }
-  pre.ansi2html-content {
+  pre.term {
+    display: block;  /* override ansi2html's inline default so padding/bg apply */
     margin: 0; padding: 18px 16px 22px;
     background: #0c0c0c; border-radius: 0 0 8px 8px;
-    color: #d4d4d4;  /* brighten un-colored text; red/green spans keep their own color */
+    color: #d4d4d4;  /* default for un-colored text; red/green spans keep their own color */
     font: 14px/1.5 "Cascadia Code", "Consolas", ui-monospace, monospace;
     white-space: pre; overflow-x: auto;
   }
@@ -1130,7 +1131,7 @@
 <body>
   <div class="frame">
     <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>pytest — dates-red</div>
-    <span class="ansi1">============================= test session starts =============================</span>
+    <pre class="term"><span class="ansi1">============================= test session starts =============================</span>
 platform win32 -- Python 3.14.2, pytest-9.1.0, pluggy-1.6.0
 rootdir: C:\Users\Diana\Desktop\GitHub\canvas-daily
 configfile: pyproject.toml
@@ -1201,8 +1202,8 @@ tests\test_dates.py <span class="ansi31">F</span><span class="ansi31">F</span><s
 <span class="ansi31">FAILED</span> tests/test_dates.py::<span class="ansi1">test_due_exactly_now_is_due_today</span> - AssertionError: assert '' == 'due_today'
 <span class="ansi31">FAILED</span> tests/test_dates.py::<span class="ansi1">test_due_at_the_last_second_of_today_is_due_today</span> - AssertionError: assert '' == 'due_today'
 <span class="ansi31">FAILED</span> tests/test_dates.py::<span class="ansi1">test_due_at_midnight_tomorrow_is_upcoming</span> - AssertionError: assert '' == 'upcoming'
-<span class="ansi31">============================== </span><span class="ansi31"></span><span class="ansi1 ansi31">6 failed</span><span class="ansi31"> in 0.12s</span><span class="ansi31"> ==============================</span>
-
+<span class="ansi31">============================== </span><span class="ansi31"></span><span class="ansi1 ansi31">6 failed</span><span class="ansi31"> in 0.11s</span><span class="ansi31"> ==============================</span>
+</pre>
   </div>
 </body>
 </html>
