@@ -64,6 +64,12 @@ Procedure for a layer (example label `canvas`):
 
 One red + one green **per layer** — not per individual test. `.playwright-mcp/` is scratch and git-ignored.
 
+**Enforcement (mechanical, not just this rule):**
+- `tools/check_evidence.py` fails if any `tests/test_<label>.py` lacks both screenshots referenced in the README.
+- A **pre-commit hook** (`.githooks/pre-commit`) runs that check plus the full test suite, blocking any commit that violates either. Enable it once per clone: `git config core.hooksPath .githooks`. Bypass a deliberate WIP commit with `git commit --no-verify`.
+- **CI** (`.github/workflows/ci.yml`) runs the same check and the tests on every push and PR — so a bypassed local commit still gets caught on GitHub.
+- What the machine can't check: that the red was captured *live, before* the code. That stays on you and me to honor.
+
 ## Don't
 - Don't invent assignment requirements Canvas doesn't hold. Surface what the instructor put in Canvas — nothing more.
 - Don't add HTMX or new frameworks for the core build. Server-rendered Jinja2 is enough.
