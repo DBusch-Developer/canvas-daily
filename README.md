@@ -61,6 +61,7 @@ TDD throughout — red, green, refactor — layered inside-out:
 4. **ORM integration** — real Neon test branch. One-to-many model, round-trip, report query.
 5. **End-to-end** — sign up, add connection, view report, click into detail, generate breakdown.
 6. **Daily sync** — Canvas mocked. Per-connection course walk, store full detail, upsert (no duplicates), one path for one connection or many.
+7. **Daily email** — SMTP mocked. One message per user, grouped/sorted/labeled by connection, no token in the body.
 
 ### Test evidence
 
@@ -131,6 +132,18 @@ Red — the sync module and `fetch_courses` don't exist yet:
 Green — after writing `fetch_courses`, `sync_connection`, and `run_daily_sync`:
 
 ![Daily sync tests passing — four green passes](docs/test-evidence/sync-green.png)
+
+**Layer 7 — daily email (SMTP mocked)**
+
+One plain-text email per user, merging every assignment across all their connections — grouped Past due / Due today / Upcoming, sorted by due date, each item labeled by its connection. Summary only (names, dates, labels), so **the access token never appears in the body**. SMTP is injected and faked in tests — no mail is actually sent.
+
+Red — the mailer module doesn't exist yet:
+
+![Daily email tests failing — collection error, module missing](docs/test-evidence/mailer-red.png)
+
+Green — after writing `build_report_email`, `send_email`, and `send_daily_reports`:
+
+![Daily email tests passing — four green passes](docs/test-evidence/mailer-green.png)
 
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
