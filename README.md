@@ -61,6 +61,22 @@ TDD throughout — red, green, refactor — layered inside-out:
 4. **ORM integration** — real Neon test branch. One-to-many model, round-trip, report query.
 5. **End-to-end** — sign up, add connection, view report, click into detail, generate breakdown.
 
+### Test evidence
+
+Each layer is documented with a captured pytest run — the failing red before the code exists, the passing green after. Images live in [`docs/test-evidence/`](docs/test-evidence/).
+
+**Layer 1 — date bucketing**
+
+Red — the function stubbed, logic not yet written:
+
+![Date tests failing — six red failures](docs/test-evidence/dates-red.png)
+
+Green — after writing `classify_due`:
+
+![Date tests passing — six green passes](docs/test-evidence/dates-green.png)
+
+How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
+
 ## Security
 
 - Access tokens are **encrypted at rest** — never stored, printed, or logged in plaintext.

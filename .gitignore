@@ -9,6 +9,9 @@ venv/
 .coverage
 htmlcov/
 
+# Playwright MCP scratch output (snapshots, console logs)
+.playwright-mcp/
+
 # Secrets & env
 .env
 *.env
