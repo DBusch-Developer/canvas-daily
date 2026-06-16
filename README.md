@@ -85,6 +85,16 @@ Green — after writing `fetch_assignments`:
 
 ![Canvas fetch tests passing — five green passes](docs/test-evidence/canvas-green.png)
 
+**Layer 3 — AI breakdown (Groq mocked at the httpx transport)**
+
+Red — eight behaviors written against an empty stub: context assembly, dropping missing fields, the four-section system prompt, returning markdown, timeout → 504, clean non-timeout error, and no API key in any log line:
+
+![AI breakdown tests failing — eight red failures](docs/test-evidence/ai-red.png)
+
+Green — after writing `generate_breakdown` and the `/breakdown` endpoint:
+
+![AI breakdown tests passing — eight green passes](docs/test-evidence/ai-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Security
