@@ -81,9 +81,9 @@ Red — the five behaviors written against an empty stub: pagination, `include[]
 
 ![Canvas fetch tests failing — five red failures](docs/test-evidence/canvas-red.png)
 
-Green — after writing `fetch_assignments`:
+Green — after writing `fetch_assignments` (and a later regression test normalizing Canvas `...Z` timestamps to naive UTC — six tests):
 
-![Canvas fetch tests passing — five green passes](docs/test-evidence/canvas-green.png)
+![Canvas fetch tests passing — six green passes](docs/test-evidence/canvas-green.png)
 
 **Layer 3 — AI breakdown (Groq mocked at the httpx transport)**
 

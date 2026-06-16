@@ -5,7 +5,7 @@ injected rather than created here. One call per page, following the `Link`
 header until there is no `next` — never just page one.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 import nh3
 
@@ -54,7 +54,12 @@ def _parse(raw):
 def _parse_dt(value):
     if value is None:
         return None
-    return datetime.fromisoformat(value)
+    parsed = datetime.fromisoformat(value)
+    # Canvas "...Z" timestamps parse as tz-aware; normalize to naive UTC so they
+    # line up with the date bucketing and the stored (naive) timestamp columns.
+    if parsed.tzinfo is not None:
+        parsed = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+    return parsed
 
 
 def _next_page(response):

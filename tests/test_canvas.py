@@ -39,6 +39,29 @@ def test_parses_core_assignment_fields():
     assert captured[0].headers["Authorization"] == "Bearer secret-token"
 
 
+def test_canvas_timestamps_normalized_to_naive_utc():
+    # Canvas sends "...Z" timestamps; fromisoformat makes those timezone-aware.
+    # The rest of the app (date bucketing, stored columns) is naive UTC, so the
+    # fetch must normalize — otherwise comparing due_at to "now" raises.
+    def handler(request):
+        return httpx.Response(200, json=[{
+            "id": 1, "name": "X", "submission_types": [], "html_url": "", "description": "",
+            "due_at": "2026-06-20T23:59:00Z", "points_possible": None,
+            "submission": {
+                "workflow_state": "graded", "score": 9.0, "late": False,
+                "missing": False, "excused": False,
+                "submitted_at": "2026-06-19T08:30:00Z",
+            },
+        }])
+
+    a = fetch_assignments(BASE, "tok", 1, client_for(handler))[0]
+
+    assert a["due_at"].tzinfo is None
+    assert a["due_at"] == datetime(2026, 6, 20, 23, 59, 0)
+    assert a["submitted_at"].tzinfo is None
+    assert a["submitted_at"] == datetime(2026, 6, 19, 8, 30, 0)
+
+
 def test_follows_link_header_pagination():
     def handler(request):
         if request.url.params.get("page") == "2":
