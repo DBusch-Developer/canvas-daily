@@ -18,6 +18,7 @@ Two APIs: **Canvas** (third-party assignment data) and **Groq / Llama 3.3 70B** 
 
 ## Hard rules
 - **TDD-first. Always.** Red, green, refactor. No production code without a failing test first. Layer inside-out: pure functions → fetch (mocked) → ORM integration → E2E.
+- **Every TDD layer is documented with a captured red and green terminal screenshot, committed and linked in the README.** The red is captured *live, before the implementation exists* — never a reenactment once code is written. No layer is "done" without both images in `docs/test-evidence/` and referenced in the README. Full procedure below under **Test evidence**.
 - **Tokens are encrypted at rest. Never store, print, or log a token in plaintext.** Not in commits, not in logs, not in error messages.
 - **Base URL lives on the connection, never as global config.** Institutions are on different Canvas domains.
 - **Sanitize Canvas `description` HTML before it touches a page or email.** Never pipe raw Canvas HTML straight through.
@@ -45,6 +46,23 @@ Two APIs: **Canvas** (third-party assignment data) and **Groq / Llama 3.3 70B** 
 - **AI breakdown** — Groq mocked. Context assembly, four-section output, timeout → 504, no key in logs.
 - **Integration** — real Neon test branch. One-to-many model, round-trip, report query.
 - **E2E** — sign up, add connection, view report, click into detail, generate breakdown.
+
+## Test evidence — mandatory, every layer
+Each TDD layer gets two committed screenshots: the failing **red** (captured before any implementation), then the passing **green**. Both live in `docs/test-evidence/` and are linked from the README's "Test evidence" section. This is not optional and not a one-time thing — it happens for every layer, forever.
+
+The harness is `tools/run_to_html.py`. It runs pytest with color forced on and renders the output to a terminal-styled HTML page in `docs/test-evidence/<label>.html`. A headless browser then screenshots that page into a PNG.
+
+Procedure for a layer (example label `canvas`):
+
+1. **Write the failing test first.** Implementation does not exist yet.
+2. **Capture red — live, before writing code:** `python tools/run_to_html.py canvas-red tests/test_canvas.py` (run via the venv: `.venv\Scripts\python.exe`). Confirm it reports RED.
+3. **Screenshot the red page.** Serve the folder over local HTTP — `file://` is blocked in the browser tool: `python -m http.server 8731 --directory docs/test-evidence`. Navigate the browser to `http://127.0.0.1:8731/canvas-red.html` and screenshot the `.frame` element to `canvas-red.png`. Move the PNG into `docs/test-evidence/`.
+4. **Write the implementation** until the test passes.
+5. **Capture green:** `python tools/run_to_html.py canvas-green tests/test_canvas.py` → confirm GREEN → screenshot `canvas-green.html` the same way → `canvas-green.png`.
+6. **Verify the images by eye** — every line legible, no black-on-black, red shows red FAILED, green shows green passed.
+7. **Add both PNGs to the README** under "Test evidence" with a one-line caption each, stop the HTTP server, commit (short message), push.
+
+One red + one green **per layer** — not per individual test. `.playwright-mcp/` is scratch and git-ignored.
 
 ## Don't
 - Don't invent assignment requirements Canvas doesn't hold. Surface what the instructor put in Canvas — nothing more.
