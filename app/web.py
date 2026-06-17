@@ -162,6 +162,13 @@ def create_app():
         if user is None:
             return RedirectResponse("/login", status_code=303)
         assignment = _owned_assignment_or_404(session, assignment_id, user)
+        # An HTMX request swaps just the result in place; a normal request gets
+        # the full page. Don't hard-require the header — degrade to full page.
+        template = (
+            "breakdown_result.html"
+            if request.headers.get("HX-Request")
+            else "breakdown.html"
+        )
         context = {
             "title": assignment.name,
             "description": assignment.description,
@@ -173,17 +180,17 @@ def create_app():
             markdown = generate_breakdown(context, client, os.environ.get("GROQ_API_KEY", ""))
         except AITimeoutError:
             return TEMPLATES.TemplateResponse(
-                request, "breakdown.html",
+                request, template,
                 {"a": assignment, "error": "The AI breakdown took too long. Please try again."},
                 status_code=504,
             )
         except AIError:
             return TEMPLATES.TemplateResponse(
-                request, "breakdown.html",
+                request, template,
                 {"a": assignment, "error": "The AI breakdown is unavailable right now."},
                 status_code=502,
             )
         return TEMPLATES.TemplateResponse(
-            request, "breakdown.html", {"a": assignment, "markdown": markdown})
+            request, template, {"a": assignment, "markdown": markdown})
 
     return app

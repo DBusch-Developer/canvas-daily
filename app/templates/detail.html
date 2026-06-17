@@ -72,8 +72,19 @@
     {% endif %}
   </section>
 
-  <form class="breakdown-cta" method="post" action="/assignments/{{ a.id }}/breakdown">
+  {# HTMX swaps the result into #breakdown-result below. Without JS the same form
+     still POSTs normally and the route returns the full breakdown page. #}
+  <form class="breakdown-cta" method="post" action="/assignments/{{ a.id }}/breakdown"
+        hx-post="/assignments/{{ a.id }}/breakdown"
+        hx-target="#breakdown-result"
+        hx-swap="innerHTML"
+        hx-disabled-elt="find button">
     <button class="btn btn--accent" type="submit">✦ Break this down with AI</button>
     <span class="breakdown-cta__hint">Get a step-by-step study plan, watch-outs, and a time estimate.</span>
+    <span class="breakdown-cta__loading htmx-indicator" aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span> Thinking it through…
+    </span>
   </form>
+
+  <div id="breakdown-result" class="breakdown-result"></div>
 {% endblock %}
