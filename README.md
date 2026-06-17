@@ -145,6 +145,18 @@ Green — after writing `build_report_email`, `send_email`, and `send_daily_repo
 
 ![Daily email tests passing — four green passes](docs/test-evidence/mailer-green.png)
 
+**Layer 8 — HTMX breakdown swap (Groq mocked)**
+
+The AI breakdown swaps in place on the detail page instead of navigating to a separate page. An HTMX request (the `HX-Request` header) to the breakdown route returns just the result fragment — success markdown, or the timeout/error notice — with no site chrome; a normal POST still returns the full page, so the existing click-through keeps working. Groq is mocked; the AI logic is untouched.
+
+Red — the route still returns the full page even for an HTMX request:
+
+![HTMX breakdown tests failing — three red failures, one pass](docs/test-evidence/htmx-red.png)
+
+Green — after splitting the fragment out and returning it on `HX-Request`:
+
+![HTMX breakdown tests passing — four green passes](docs/test-evidence/htmx-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

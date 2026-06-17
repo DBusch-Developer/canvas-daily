@@ -1,0 +1,11 @@
+{# The breakdown result only: the success markdown, or an error/timeout notice.
+   Shared by the full breakdown.html page and the HTMX in-place swap, so both
+   render identical markup. #}
+{% if error %}
+  <p class="notice">{{ error }}</p>
+{% else %}
+  <section class="panel">
+    {# Markdown text shown as-is; rendered in a monospace block for readability. #}
+    <pre class="breakdown">{{ markdown }}</pre>
+  </section>
+{% endif %}

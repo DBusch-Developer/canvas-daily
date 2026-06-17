@@ -436,6 +436,30 @@ a:hover { text-decoration: underline; }
 .breakdown-cta { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem 1rem; margin: 0; }
 .breakdown-cta__hint { color: var(--muted); font-size: .88rem; }
 
+/* HTMX shows the loading state only while the request is in flight. */
+.breakdown-cta__loading {
+  display: none;
+  align-items: center;
+  gap: .5rem;
+  color: var(--muted);
+  font-size: .88rem;
+  font-weight: 500;
+}
+.htmx-request .breakdown-cta__loading { display: inline-flex; }
+.breakdown-cta button[disabled] { opacity: .6; cursor: progress; }
+
+.spinner {
+  width: .9rem;
+  height: .9rem;
+  border-radius: 999px;
+  border: 2px solid rgba(239, 107, 52, .35);
+  border-top-color: var(--coral);
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.breakdown-result:not(:empty) { margin-top: 1.2rem; }
+
 .notice {
   border-radius: var(--radius);
   padding: 1rem 1.2rem;

@@ -8,12 +8,5 @@
     <h1 class="brief__title">{{ a.name }}</h1>
   </section>
 
-  {% if error %}
-    <p class="notice">{{ error }}</p>
-  {% else %}
-    <section class="panel">
-      {# Markdown text shown as-is; rendered in a monospace block for readability. #}
-      <pre class="breakdown">{{ markdown }}</pre>
-    </section>
-  {% endif %}
+  {% include "breakdown_result.html" %}
 {% endblock %}
