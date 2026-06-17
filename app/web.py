@@ -12,6 +12,7 @@ from pathlib import Path
 import httpx
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 from starlette.middleware.sessions import SessionMiddleware
@@ -69,6 +70,11 @@ def create_app():
     app.add_middleware(
         SessionMiddleware,
         secret_key=os.environ.get("SESSION_SECRET", "dev-insecure-secret"),
+    )
+    app.mount(
+        "/static",
+        StaticFiles(directory=str(Path(__file__).parent / "static")),
+        name="static",
     )
 
     @app.get("/signup")

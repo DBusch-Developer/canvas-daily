@@ -2,18 +2,39 @@
 {% block title %}Your report · Canvas Daily{% endblock %}
 {% block body %}
   <h1>Your report</h1>
-  <p class="meta"><a href="/connections/new">Add connection</a> · <form method="post" action="/logout" style="display:inline"><button type="submit">Log out</button></form></p>
+  <p class="meta">Today across all your Canvas connections.</p>
 
-  {% for key, title in [('past_due', 'Past due'), ('due_today', 'Due today'), ('upcoming', 'Upcoming')] %}
-    <h2>{{ title }}</h2>
-    {% if buckets[key] %}
-      <ul>
-        {% for a in buckets[key] %}
-          <li><a href="/assignments/{{ a.id }}">{{ a.name }}</a> <span class="meta">— due {{ a.due_at }}</span></li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="meta">Nothing here.</p>
-    {% endif %}
+  <div class="action-bar">
+    <a class="btn btn--primary" href="/connections/new">Add connection</a>
+    <span class="spacer"></span>
+    <form method="post" action="/logout">
+      <button class="btn btn--ghost" type="submit">Log out</button>
+    </form>
+  </div>
+
+  {% for key, title, mod in [('past_due', 'Past due', 'past'), ('due_today', 'Due today', 'today'), ('upcoming', 'Upcoming', 'soon')] %}
+    <section class="bucket bucket--{{ mod }}">
+      <div class="bucket__head">
+        <span class="chip chip--{{ mod }}">{{ title }}</span>
+        <span class="bucket__count">{{ buckets[key] | length }}</span>
+      </div>
+      {% if buckets[key] %}
+        <ul class="cards">
+          {% for a in buckets[key] %}
+            <li class="card">
+              <div class="card__title"><a href="/assignments/{{ a.id }}">{{ a.name }}</a></div>
+              <div class="card__meta">
+                <span class="due">due {{ a.due_at }}</span>
+                <span class="source">{{ a.connection.label }}</span>
+                {% if a.missing %}<span class="flag">Missing</span>
+                {% elif a.late %}<span class="flag">Late</span>{% endif %}
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">Nothing here — you're all caught up.</p>
+      {% endif %}
+    </section>
   {% endfor %}
 {% endblock %}

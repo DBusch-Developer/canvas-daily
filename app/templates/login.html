@@ -1,12 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Log in · Canvas Daily{% endblock %}
 {% block body %}
-  <h1>Log in</h1>
-  {% if error %}<p class="error">{{ error }}</p>{% endif %}
-  <form method="post" action="/login">
-    <input name="email" type="email" placeholder="Email" required>
-    <input name="password" type="password" placeholder="Password" required>
-    <button type="submit">Log in</button>
-  </form>
-  <p class="meta">No account yet? <a href="/signup">Sign up</a>.</p>
+  <div class="auth">
+    <h1>Welcome back</h1>
+    <p class="auth__sub meta">Your day, across every class.</p>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    <form class="card-form" method="post" action="/login">
+      <input name="email" type="email" placeholder="Email" required>
+      <input name="password" type="password" placeholder="Password" required>
+      <button class="btn btn--primary" type="submit">Log in</button>
+    </form>
+    <p class="meta auth__alt">No account yet? <a href="/signup">Sign up</a>.</p>
+  </div>
 {% endblock %}

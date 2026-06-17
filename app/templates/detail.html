@@ -1,18 +1,19 @@
 {% extends "base.html" %}
 {% block title %}{{ a.name }} · Canvas Daily{% endblock %}
 {% block body %}
-  <p class="meta"><a href="/">← Back to report</a></p>
+  <a class="back-link" href="/">← Back to report</a>
   <h1>{{ a.name }}</h1>
-  <p class="meta">
-    {% if a.points_possible is not none %}{{ a.points_possible }} points · {% endif %}
-    {% if a.due_at %}due {{ a.due_at }} · {% endif %}
-    {{ a.workflow_state }}
-  </p>
+
+  <ul class="facts">
+    {% if a.points_possible is not none %}<li class="fact">{{ a.points_possible }} <span>points</span></li>{% endif %}
+    {% if a.due_at %}<li class="fact"><span>due</span> {{ a.due_at }}</li>{% endif %}
+    <li class="fact"><span>status</span> {{ a.workflow_state }}</li>
+  </ul>
 
   {# Description was sanitized on fetch (nh3), so it is safe to render. #}
-  <div>{{ a.description | safe }}</div>
+  <div class="prose">{{ a.description | safe }}</div>
 
-  <form method="post" action="/assignments/{{ a.id }}/breakdown">
-    <button type="submit">Break this down</button>
+  <form class="breakdown-cta" method="post" action="/assignments/{{ a.id }}/breakdown">
+    <button class="btn btn--primary" type="submit">Break this down</button>
   </form>
 {% endblock %}
