@@ -147,6 +147,22 @@ Green — after writing `build_report_email`, `send_email`, and `send_daily_repo
 
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
+## Environment variables
+
+All config comes from the environment — nothing is hardcoded. In local dev these are read from a `.env` file (loaded automatically); in production they're injected by the host. `.env` is never committed.
+
+| Variable | Required | What it does |
+| --- | --- | --- |
+| `DATABASE_URL` | **Yes** | Connection string for the app's own Postgres (Neon). Used by the web app and both daily jobs. The jobs refuse to run if it's unset. Local dev may point this at a SQLite file instead. |
+| `TOKEN_ENCRYPTION_KEY` | **Yes** | Fernet key that encrypts/decrypts Canvas access tokens at rest. Tokens are only ever stored as ciphertext; without this key they can't be read or written. |
+| `GROQ_API_KEY` | **Yes** | Key for the Groq / Llama 3.3 service that generates the on-demand AI study breakdown. Read when the button is pressed — never logged or committed. |
+| `SESSION_SECRET` | Prod | Signs login session cookies. Falls back to an insecure dev default if unset — must be a real secret in production. |
+| `SMTP_HOST` | Email job | Mail server hostname. The email job refuses to run without it. |
+| `SMTP_PORT` | No | Mail server port. Defaults to `587`. |
+| `SMTP_USERNAME` / `SMTP_PASSWORD` | Email job | Mail server login. If both are set the job authenticates; if absent it connects without auth. |
+| `SMTP_FROM` | No | "From" address on the daily email. Falls back to `SMTP_USERNAME`. |
+| `TEST_DATABASE_URL` | Tests | Points the integration/E2E tests at a throwaway Postgres branch — never production. Those tests skip cleanly when it's unset. |
+
 ## Running the daily jobs
 
 Two cron entry points wire the tested cores to real resources (DB session, HTTP client, SMTP). They read config from the environment and run nothing locally by accident — `DATABASE_URL` must point at production, not the test branch.
