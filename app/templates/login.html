@@ -1,15 +1,36 @@
 {% extends "base.html" %}
 {% block title %}Log in · Canvas Daily{% endblock %}
-{% block body %}
-  <div class="auth">
-    <h1>Welcome back</h1>
-    <p class="auth__sub meta">Your day, across every class.</p>
-    {% if error %}<p class="error">{{ error }}</p>{% endif %}
-    <form class="card-form" method="post" action="/login">
-      <input name="email" type="email" placeholder="Email" required>
-      <input name="password" type="password" placeholder="Password" required>
-      <button class="btn btn--primary" type="submit">Log in</button>
-    </form>
-    <p class="meta auth__alt">No account yet? <a href="/signup">Sign up</a>.</p>
+{% block layout %}
+  <div class="gate">
+    <aside class="gate__brand">
+      <div class="gate__brand-inner">
+        <a class="gate__logo" href="/" aria-label="Canvas Daily home">
+          <img src="/static/logo.png" alt="Canvas Daily">
+        </a>
+        <h1 class="gate__headline">Start your day in control.</h1>
+        <p class="gate__pitch">Canvas Daily turns your assignments into a clear daily action plan.</p>
+      </div>
+      <div class="brand-rule" aria-hidden="true"></div>
+    </aside>
+
+    <main class="gate__panel">
+      <div class="gate__card">
+        <h2 class="gate__title">Log in</h2>
+        <p class="gate__sub">Welcome back — here's your day, across every class.</p>
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        <form class="form" method="post" action="/login">
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" placeholder="you@school.edu" required>
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" placeholder="Your password" required>
+          </div>
+          <button class="btn btn--accent" type="submit">Log in</button>
+        </form>
+        <p class="gate__alt">No account yet? <a href="/signup">Sign up</a>.</p>
+      </div>
+    </main>
   </div>
 {% endblock %}
