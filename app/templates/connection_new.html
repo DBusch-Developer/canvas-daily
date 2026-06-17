@@ -1,19 +1,58 @@
 {% extends "base.html" %}
-{% block title %}Add connection · Canvas Daily{% endblock %}
+{% block title %}Account · Canvas Daily{% endblock %}
 {% block body %}
-  <div class="auth">
-    <h1>Add a Canvas connection</h1>
-    <p class="auth__sub meta">Link a student or observer account to pull its assignments.</p>
-    <form class="card-form" method="post" action="/connections">
-      <input name="label" placeholder="Label (e.g. Mine, Kid A)" required>
-      <input name="base_url" placeholder="Canvas base URL (https://school.instructure.com)" required>
-      <select name="account_type">
-        <option value="student">student</option>
-        <option value="observer">observer</option>
-      </select>
-      <input name="access_token" type="password" placeholder="Access token" required>
-      <button class="btn btn--primary" type="submit">Add connection</button>
-    </form>
-    <p class="meta auth__alt"><a href="/">Back to report</a></p>
+  <a class="back-link" href="/">← Back to dashboard</a>
+
+  <section class="brief brief--tight">
+    <p class="eyebrow">Account command center</p>
+    <h1 class="brief__title">Account settings</h1>
+    <p class="hero__sub">Manage your Canvas connections and what feeds your daily report.</p>
+  </section>
+
+  <div class="settings-grid">
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Add a Canvas connection</h2>
+      </div>
+      <p class="panel__lead">Link a student or observer account to pull its assignments into your report.</p>
+      {% if error %}<p class="error">{{ error }}</p>{% endif %}
+      <form class="form" method="post" action="/connections">
+        <div class="field">
+          <label for="label">Label</label>
+          <input id="label" name="label" placeholder="e.g. Mine, Kid A" required>
+          <span class="field__hint">A friendly name shown next to each assignment.</span>
+        </div>
+        <div class="field">
+          <label for="base_url">Canvas base URL</label>
+          <input id="base_url" name="base_url" placeholder="https://school.instructure.com" required>
+          <span class="field__hint">Your institution's Canvas domain.</span>
+        </div>
+        <div class="field">
+          <label for="account_type">Account type</label>
+          <select id="account_type" name="account_type">
+            <option value="student">Student</option>
+            <option value="observer">Observer</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="access_token">Access token</label>
+          <input id="access_token" name="access_token" type="password" placeholder="Paste your Canvas access token" required>
+          <span class="field__hint">Stored encrypted. We never display or log it again.</span>
+        </div>
+        <button class="btn btn--primary" type="submit">Save connection</button>
+      </form>
+    </section>
+
+    <section class="panel panel--muted">
+      <div class="panel__head">
+        <h2 class="panel__title">How your report works</h2>
+      </div>
+      <ul class="checklist">
+        <li>One daily email merges every connection you add here.</li>
+        <li>Work is grouped Past due, Due today, and Upcoming.</li>
+        <li>Each item links to an instant detail page — no login to Canvas needed to read it.</li>
+        <li>You still submit work in Canvas; Canvas Daily is your early-warning layer.</li>
+      </ul>
+    </section>
   </div>
 {% endblock %}

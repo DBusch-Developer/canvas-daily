@@ -1,19 +1,79 @@
 {% extends "base.html" %}
 {% block title %}{{ a.name }} · Canvas Daily{% endblock %}
 {% block body %}
-  <a class="back-link" href="/">← Back to report</a>
-  <h1>{{ a.name }}</h1>
+  {% set tone = 'danger' if (a.missing or a.late)
+                else ('done' if (a.workflow_state == 'graded' or a.submitted_at) else 'today') %}
+  {% set status = 'Missing' if a.missing
+                  else ('Late' if a.late
+                  else ('Complete' if (a.workflow_state == 'graded' or a.submitted_at)
+                  else (a.workflow_state | capitalize if a.workflow_state else 'Open'))) %}
 
-  <ul class="facts">
-    {% if a.points_possible is not none %}<li class="fact">{{ a.points_possible }} <span>points</span></li>{% endif %}
-    {% if a.due_at %}<li class="fact"><span>due</span> {{ a.due_at }}</li>{% endif %}
-    <li class="fact"><span>status</span> {{ a.workflow_state }}</li>
+  <a class="back-link" href="/">← Back to dashboard</a>
+
+  <section class="brief">
+    <p class="eyebrow">Mission brief</p>
+    <h1 class="brief__title">{{ a.name }}</h1>
+    <div class="brief__tags">
+      <span class="course-pill course-pill--lg">{{ a.connection.label }}</span>
+      <span class="badge badge--{{ tone }}">{{ status }}</span>
+    </div>
+    {% if a.html_url %}
+      <a class="btn btn--primary" href="{{ a.html_url }}" target="_blank" rel="noopener">Open in Canvas ↗</a>
+    {% endif %}
+  </section>
+
+  <ul class="metagrid">
+    <li class="metacard">
+      <span class="metacard__label">Due date</span>
+      <span class="metacard__value">{% if a.due_at %}{{ a.due_at }}{% else %}No due date{% endif %}</span>
+    </li>
+    <li class="metacard">
+      <span class="metacard__label">Connection</span>
+      <span class="metacard__value">{{ a.connection.label }}</span>
+    </li>
+    {% if a.points_possible is not none %}
+      <li class="metacard">
+        <span class="metacard__label">Points</span>
+        <span class="metacard__value">{{ a.points_possible }}</span>
+      </li>
+    {% endif %}
+    {% if a.score is not none %}
+      <li class="metacard">
+        <span class="metacard__label">Score</span>
+        <span class="metacard__value">{{ a.score }}</span>
+      </li>
+    {% endif %}
+    {% if a.workflow_state %}
+      <li class="metacard">
+        <span class="metacard__label">Submission</span>
+        <span class="metacard__value">{{ a.workflow_state | replace('_', ' ') | capitalize }}</span>
+      </li>
+    {% endif %}
+    {% if a.submitted_at %}
+      <li class="metacard">
+        <span class="metacard__label">Submitted</span>
+        <span class="metacard__value">{{ a.submitted_at }}</span>
+      </li>
+    {% endif %}
   </ul>
 
-  {# Description was sanitized on fetch (nh3), so it is safe to render. #}
-  <div class="prose">{{ a.description | safe }}</div>
+  <section class="panel">
+    <div class="panel__head">
+      <h2 class="panel__title">Instructions</h2>
+    </div>
+    {% if a.description and a.description | trim %}
+      {# Description was sanitized on fetch (nh3), so it is safe to render. #}
+      <div class="prose">{{ a.description | safe }}</div>
+    {% else %}
+      <div class="empty">
+        <p class="empty__title">No instructions provided</p>
+        <p class="empty__sub">Your instructor didn't add details in Canvas. Open it in Canvas for the latest.</p>
+      </div>
+    {% endif %}
+  </section>
 
   <form class="breakdown-cta" method="post" action="/assignments/{{ a.id }}/breakdown">
-    <button class="btn btn--primary" type="submit">Break this down</button>
+    <button class="btn btn--accent" type="submit">✦ Break this down with AI</button>
+    <span class="breakdown-cta__hint">Get a step-by-step study plan, watch-outs, and a time estimate.</span>
   </form>
 {% endblock %}

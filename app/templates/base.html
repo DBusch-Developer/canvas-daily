@@ -5,18 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Canvas Daily{% endblock %}</title>
   <link rel="icon" type="image/png" href="/static/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-  <header class="site-header">
-    <div class="site-header__inner">
-      <a class="site-header__logo" href="/">
+  {% block layout %}
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="topbar__logo" href="/" aria-label="Canvas Daily home">
         <img src="/static/logo.png" alt="Canvas Daily">
       </a>
+      <nav class="topbar__nav" aria-label="Primary">
+        <a class="navlink" href="/">Dashboard</a>
+        <a class="navlink" href="/connections/new">Account</a>
+        <form method="post" action="/logout">
+          <button class="btn btn--ghost btn--sm" type="submit">Log out</button>
+        </form>
+      </nav>
     </div>
+    <div class="brand-rule" aria-hidden="true"></div>
   </header>
-  <main class="container">
+  <main class="shell">
     {% block body %}{% endblock %}
   </main>
+  {% endblock %}
 </body>
 </html>

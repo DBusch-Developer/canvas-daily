@@ -1,15 +1,36 @@
 {% extends "base.html" %}
 {% block title %}Sign up · Canvas Daily{% endblock %}
-{% block body %}
-  <div class="auth">
-    <h1>Create your account</h1>
-    <p class="auth__sub meta">One daily report for every Canvas class.</p>
-    {% if error %}<p class="error">{{ error }}</p>{% endif %}
-    <form class="card-form" method="post" action="/signup">
-      <input name="email" type="email" placeholder="Email" required>
-      <input name="password" type="password" placeholder="Password" required>
-      <button class="btn btn--primary" type="submit">Create account</button>
-    </form>
-    <p class="meta auth__alt">Already have an account? <a href="/login">Log in</a>.</p>
+{% block layout %}
+  <div class="gate">
+    <aside class="gate__brand">
+      <div class="gate__brand-inner">
+        <a class="gate__logo" href="/" aria-label="Canvas Daily home">
+          <img src="/static/logo.png" alt="Canvas Daily">
+        </a>
+        <h1 class="gate__headline">One day. Every class.</h1>
+        <p class="gate__pitch">Connect your Canvas accounts and get one clear daily plan — what's due, what's late, what's next.</p>
+      </div>
+      <div class="brand-rule" aria-hidden="true"></div>
+    </aside>
+
+    <main class="gate__panel">
+      <div class="gate__card">
+        <h2 class="gate__title">Create your account</h2>
+        <p class="gate__sub">One daily report for every Canvas class.</p>
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        <form class="form" method="post" action="/signup">
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" placeholder="you@school.edu" required>
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" placeholder="Choose a strong password" required>
+          </div>
+          <button class="btn btn--accent" type="submit">Create account</button>
+        </form>
+        <p class="gate__alt">Already have an account? <a href="/login">Log in</a>.</p>
+      </div>
+    </main>
   </div>
 {% endblock %}

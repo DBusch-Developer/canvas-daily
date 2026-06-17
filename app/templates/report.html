@@ -1,40 +1,94 @@
 {% extends "base.html" %}
-{% block title %}Your report · Canvas Daily{% endblock %}
+{% block title %}Dashboard · Canvas Daily{% endblock %}
 {% block body %}
-  <h1>Your report</h1>
-  <p class="meta">Today across all your Canvas connections.</p>
+  {% set all = buckets.past_due + buckets.due_today + buckets.upcoming %}
+  {% set total = all | length %}
+  {% set courses = all | map(attribute='connection.label') | unique | list %}
 
-  <div class="action-bar">
-    <a class="btn btn--primary" href="/connections/new">Add connection</a>
-    <span class="spacer"></span>
-    <form method="post" action="/logout">
-      <button class="btn btn--ghost" type="submit">Log out</button>
-    </form>
-  </div>
-
-  {% for key, title, mod in [('past_due', 'Past due', 'past'), ('due_today', 'Due today', 'today'), ('upcoming', 'Upcoming', 'soon')] %}
-    <section class="bucket bucket--{{ mod }}">
-      <div class="bucket__head">
-        <span class="chip chip--{{ mod }}">{{ title }}</span>
-        <span class="bucket__count">{{ buckets[key] | length }}</span>
+  <section class="hero">
+    <div class="hero__head">
+      <div>
+        <p class="eyebrow">Student command center</p>
+        <h1 class="hero__title">Here's what needs your attention.</h1>
+        <p class="hero__sub">
+          {% if total %}
+            {{ total }} assignment{{ '' if total == 1 else 's' }} across
+            {{ courses | length }} connection{{ '' if courses | length == 1 else 's' }},
+            sorted by what's most urgent.
+          {% else %}
+            A daily snapshot of every Canvas class. Add a connection to start tracking.
+          {% endif %}
+        </p>
       </div>
-      {% if buckets[key] %}
-        <ul class="cards">
-          {% for a in buckets[key] %}
-            <li class="card">
-              <div class="card__title"><a href="/assignments/{{ a.id }}">{{ a.name }}</a></div>
-              <div class="card__meta">
-                <span class="due">due {{ a.due_at }}</span>
-                <span class="source">{{ a.connection.label }}</span>
-                {% if a.missing %}<span class="flag">Missing</span>
-                {% elif a.late %}<span class="flag">Late</span>{% endif %}
-              </div>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="empty">Nothing here — you're all caught up.</p>
-      {% endif %}
-    </section>
-  {% endfor %}
+      <a class="btn btn--primary" href="/connections/new">+ Add connection</a>
+    </div>
+
+    <div class="stats">
+      <div class="stat stat--past">
+        <span class="stat__num">{{ buckets.past_due | length }}</span>
+        <span class="stat__label">Past due</span>
+      </div>
+      <div class="stat stat--today">
+        <span class="stat__num">{{ buckets.due_today | length }}</span>
+        <span class="stat__label">Due today</span>
+      </div>
+      <div class="stat stat--soon">
+        <span class="stat__num">{{ buckets.upcoming | length }}</span>
+        <span class="stat__label">Upcoming</span>
+      </div>
+      <div class="stat stat--courses">
+        <span class="stat__num">{{ courses | length }}</span>
+        <span class="stat__label">Connection{{ '' if courses | length == 1 else 's' }}</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="board">
+    {% for key, title, mod in [('past_due', 'Past due', 'past'), ('due_today', 'Due today', 'today'), ('upcoming', 'Upcoming', 'soon')] %}
+      <section class="column column--{{ mod }}" aria-labelledby="col-{{ mod }}">
+        <div class="column__head">
+          <h2 class="column__title" id="col-{{ mod }}">
+            <span class="chip chip--{{ mod }}">{{ title }}</span>
+          </h2>
+          <span class="column__count">{{ buckets[key] | length }}</span>
+        </div>
+
+        {% if buckets[key] %}
+          <ul class="cards">
+            {% for a in buckets[key] %}
+              {% set tone = 'danger' if (a.missing or a.late)
+                            else ('done' if (a.workflow_state == 'graded' or a.submitted_at) else mod) %}
+              {% set status = 'Missing' if a.missing
+                              else ('Late' if a.late
+                              else ('Complete' if (a.workflow_state == 'graded' or a.submitted_at) else title)) %}
+              <li class="card">
+                <div class="card__top">
+                  <span class="badge badge--{{ tone }}">{{ status }}</span>
+                  <span class="course-pill">{{ a.connection.label }}</span>
+                </div>
+                <h3 class="card__title">
+                  <a href="/assignments/{{ a.id }}">{{ a.name }}</a>
+                </h3>
+                <div class="card__foot">
+                  <span class="due">due {{ a.due_at }}</span>
+                  {% if a.html_url %}
+                    <a class="card__open" href="{{ a.html_url }}" target="_blank" rel="noopener">Open ↗</a>
+                  {% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="empty">
+            <p class="empty__title">All clear</p>
+            <p class="empty__sub">
+              {% if mod == 'past' %}Nothing overdue. Nice work staying ahead.
+              {% elif mod == 'today' %}Nothing due today.
+              {% else %}No upcoming work on the radar yet.{% endif %}
+            </p>
+          </div>
+        {% endif %}
+      </section>
+    {% endfor %}
+  </div>
 {% endblock %}

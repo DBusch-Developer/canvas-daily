@@ -2,13 +2,18 @@
 {% block title %}Study breakdown · {{ a.name }}{% endblock %}
 {% block body %}
   <a class="back-link" href="/assignments/{{ a.id }}">← Back to assignment</a>
-  <h1>Study breakdown</h1>
-  <p class="meta">{{ a.name }}</p>
+
+  <section class="brief brief--tight">
+    <p class="eyebrow">AI study breakdown</p>
+    <h1 class="brief__title">{{ a.name }}</h1>
+  </section>
 
   {% if error %}
     <p class="notice">{{ error }}</p>
   {% else %}
-    {# Markdown text shown as-is; rendered in a monospace block for readability. #}
-    <pre class="breakdown">{{ markdown }}</pre>
+    <section class="panel">
+      {# Markdown text shown as-is; rendered in a monospace block for readability. #}
+      <pre class="breakdown">{{ markdown }}</pre>
+    </section>
   {% endif %}
 {% endblock %}
