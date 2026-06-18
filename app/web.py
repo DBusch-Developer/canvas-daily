@@ -22,6 +22,7 @@ from app.auth import hash_password, verify_password
 from app.db import make_engine
 from app.models import Assignment, Connection, User
 from app.reports import report_for_user
+from app.sync import sync_connection
 
 TEMPLATES = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
@@ -42,6 +43,14 @@ def get_session():
 
 
 def get_groq_client():
+    client = httpx.Client(timeout=30.0)
+    try:
+        yield client
+    finally:
+        client.close()
+
+
+def get_canvas_client():
     client = httpx.Client(timeout=30.0)
     try:
         yield client
@@ -134,14 +143,23 @@ def create_app():
     @app.post("/connections")
     def add_connection(request: Request, label: str = Form(), base_url: str = Form(),
                        account_type: str = Form(), access_token: str = Form(),
-                       session: Session = Depends(get_session)):
+                       session: Session = Depends(get_session),
+                       canvas: httpx.Client = Depends(get_canvas_client)):
         user = _current_user(request, session)
         if user is None:
             return RedirectResponse("/login", status_code=303)
-        session.add(Connection(
+        connection = Connection(
             user_id=user.id, label=label, base_url=base_url,
             account_type=account_type, access_token=access_token,
-        ))
+        )
+        session.add(connection)
+        session.flush()  # assign connection.id before syncing
+        try:
+            sync_connection(session, connection, canvas)
+        except Exception:
+            # Keep the connection; a bad token or Canvas outage must not lose it.
+            # Never surface or log the token. last_synced_at stays None as the flag.
+            pass
         session.commit()
         return RedirectResponse("/", status_code=303)
 

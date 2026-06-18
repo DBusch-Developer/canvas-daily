@@ -8,7 +8,7 @@ from sqlmodel import Session, SQLModel, select
 from app.auth import verify_password
 from app.db import make_engine
 from app.models import Assignment, Connection, User
-from app.web import create_app, get_groq_client, get_session
+from app.web import create_app, get_canvas_client, get_groq_client, get_session
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("TEST_DATABASE_URL"),
@@ -34,13 +34,20 @@ def wipe(engine):
 
 @pytest.fixture
 def app(engine):
+    import httpx
     application = create_app()
 
     def _get_session():
         with Session(engine) as s:
             yield s
 
+    def _empty_canvas():
+        return httpx.Client(transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, json=[])
+        ))
+
     application.dependency_overrides[get_session] = _get_session
+    application.dependency_overrides[get_canvas_client] = _empty_canvas
     return application
 
 
@@ -192,3 +199,55 @@ def test_cannot_view_another_users_assignment(client, app, engine):
 
     resp = other.get(f"/assignments/{assignment_id}", follow_redirects=False)
     assert resp.status_code == 404
+
+
+def test_add_connection_auto_syncs_assignments(client, app, engine):
+    import httpx
+    signup(client, email="auto@x.com")
+
+    def handler(request):
+        path = request.url.path
+        if path.endswith("/courses"):
+            return httpx.Response(200, json=[{"id": 10, "name": "Bio"}])
+        if path.endswith("/courses/10/assignments"):
+            return httpx.Response(200, json=[{
+                "id": 1, "name": "Lab report", "due_at": "2026-06-20T23:59:00Z",
+                "points_possible": 25, "submission_types": ["online_upload"],
+                "html_url": "https://school.test/a/1", "description": "<p>Do it.</p>",
+            }])
+        return httpx.Response(200, json=[])
+
+    app.dependency_overrides[get_canvas_client] = lambda: httpx.Client(
+        transport=httpx.MockTransport(handler)
+    )
+
+    client.post("/connections", data={
+        "label": "Mine", "base_url": "https://school.test",
+        "account_type": "student", "access_token": "tok",
+    }, follow_redirects=False)
+
+    body = client.get("/").text
+    assert "Lab report" in body
+
+
+def test_add_connection_persists_even_when_sync_fails(client, app, engine):
+    import httpx
+    signup(client, email="failsync@x.com")
+
+    def boom(request):
+        return httpx.Response(401, json={"errors": ["bad token"]})
+
+    app.dependency_overrides[get_canvas_client] = lambda: httpx.Client(
+        transport=httpx.MockTransport(boom)
+    )
+
+    resp = client.post("/connections", data={
+        "label": "Mine", "base_url": "https://school.test",
+        "account_type": "student", "access_token": "tok",
+    }, follow_redirects=False)
+    assert resp.status_code in (302, 303)
+
+    with Session(engine) as s:
+        assert s.exec(select(Connection)).first() is not None
+    # Dashboard still renders, no crash.
+    assert client.get("/").status_code == 200
