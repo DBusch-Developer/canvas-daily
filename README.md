@@ -157,17 +157,29 @@ Green — after splitting the fragment out and returning it on `HX-Request`:
 
 ![HTMX breakdown tests passing — four green passes](docs/test-evidence/htmx-green.png)
 
-**Layer 9 — auto-sync on connect + accounts list (Canvas mocked, Neon test branch)**
+**Layer 9 — accounts list + sync stamping (Canvas mocked, Neon test branch)**
 
-What makes adding a connection useful the moment you save it: the assignments are pulled and stored right then — no manual job — and the connection survives a failed sync. Seven behaviors: a successful sync **stamps `last_synced_at`** (what the list surfaces); adding a connection **auto-syncs** its assignments onto the dashboard; a failed sync **keeps the connection** and logs a **token-free** warning; the settings screen **lists accounts**; an **empty state** when there are none; **removing** a connection cascades to its assignments; and a user **cannot remove another user's** connection. Canvas is mocked at the httpx boundary; the web flow runs through a real TestClient against the Neon test branch.
+The settings screen as a real accounts list, and the sync stamp it surfaces. Six behaviors: a successful sync **stamps `last_synced_at`** (what the list shows); the settings screen **lists accounts**; an **empty state** when there are none; a **"Sync failed" badge** when a connection's last sync errored; **removing** a connection cascades to its assignments; and a user **cannot remove another user's** connection. Canvas is mocked at the httpx boundary; the web flow runs through a real TestClient against the Neon test branch. (Adding a connection and its background sync is Layer 10.)
 
-Red — the auto-sync wiring, the `last_synced_at` column, the accounts list and the remove route don't exist yet, so the test module can't even import:
+Red — the accounts feature doesn't exist yet, so the test module can't even import:
 
-![Auto-sync tests failing — collection error, get_canvas_client missing](docs/test-evidence/autosync-red.png)
+![Accounts-list tests failing — collection error, feature missing](docs/test-evidence/autosync-red.png)
 
-Green — after writing the `get_canvas_client` dependency, auto-sync on add, the `last_synced_at` stamp, the accounts-list page, and the remove route:
+Green — after writing the accounts list, the `last_synced_at` stamp, the sync-failed badge, and the remove route:
 
-![Auto-sync tests passing — seven green passes](docs/test-evidence/autosync-green.png)
+![Accounts-list tests passing — six green passes](docs/test-evidence/autosync-green.png)
+
+**Layer 10 — background sync + account setup page (Canvas mocked, Neon test branch)**
+
+Adding a connection no longer freezes on a synchronous fetch: the connection is saved, the sync runs in a **background task**, and you land on a **setup page** that polls until it's done. Nine behaviors: a new connection defaults to **`pending`**; the background sync **stores assignments and marks `ok`**; a failed background sync **keeps the connection and marks `error`** (token-free log); adding a connection **redirects to the setup page**; assignments **appear on the dashboard once the background sync finishes**; a failed add still **persists with `error`**; the **status endpoint** reports the state as JSON; the **setup page renders, then redirects** once status is `ok`; and a user **cannot view another user's** setup page or status. Canvas is mocked at the httpx boundary; the flow runs through a real TestClient (which runs background tasks) against the Neon test branch.
+
+Red — the background sync, setup page, and status endpoint don't exist yet, so the test module can't even import:
+
+![Setup-flow tests failing — collection error, feature missing](docs/test-evidence/setup-red.png)
+
+Green — after writing the background sync, the `sync_status` column, the setup page + poller, and the status endpoint:
+
+![Setup-flow tests passing — nine green passes](docs/test-evidence/setup-green.png)
 
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
