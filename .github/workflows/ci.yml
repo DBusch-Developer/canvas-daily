@@ -21,5 +21,10 @@ jobs:
       - name: Enforce per-layer test evidence
         run: python tools/check_evidence.py
 
+      - name: Generate a test encryption key
+        # Test-only Fernet key, generated fresh each run — it only encrypts the
+        # throwaway tokens the offline (SQLite) tests create. Never a real secret.
+        run: echo "TOKEN_ENCRYPTION_KEY=$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')" >> "$GITHUB_ENV"
+
       - name: Run tests
         run: python -m pytest -q
