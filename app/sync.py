@@ -28,7 +28,7 @@ def sync_connection(session, connection, client):
             connection.base_url, connection.access_token, course["id"], client
         )
         for parsed in parsed_list:
-            _upsert(session, connection.id, parsed)
+            _upsert(session, connection.id, parsed, course.get("code") or "")
     connection.last_synced_at = _now()
     session.add(connection)
     session.flush()
@@ -41,7 +41,7 @@ def run_daily_sync(session, client):
     session.flush()
 
 
-def _upsert(session, connection_id, parsed):
+def _upsert(session, connection_id, parsed, course_code=""):
     existing = session.exec(
         select(Assignment).where(
             Assignment.connection_id == connection_id,
@@ -54,5 +54,6 @@ def _upsert(session, connection_id, parsed):
     )
     for field in _FIELDS:
         setattr(target, field, parsed[field])
+    target.course_code = course_code
     target.fetched_at = _now()
     session.add(target)

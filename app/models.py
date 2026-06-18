@@ -75,6 +75,7 @@ class Assignment(SQLModel, table=True):
     due_at: datetime | None = None
     points_possible: float | None = None
     submission_types: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    course_code: str = ""
     html_url: str = ""
     workflow_state: str | None = None
     score: float | None = None  # null until graded

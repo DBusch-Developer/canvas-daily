@@ -346,6 +346,12 @@ a:hover { text-decoration: underline; }
   border: 1px solid rgba(239, 107, 52, .35);
 }
 
+.card__class {
+  margin: .2rem 0 0;
+  font: 600 .78rem/1.2 var(--sans);
+  color: var(--muted);
+}
+
 /* ---- Empty states ---------------------------------------------------- */
 
 .empty {

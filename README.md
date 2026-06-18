@@ -229,6 +229,18 @@ Green — after adding the property and the detail/dashboard/email labels:
 
 ![Quiz indicator tests passing](docs/test-evidence/quiz-green.png)
 
+**Layer 15 — class (course code) on the card**
+
+A dashboard card showed the connection label (the account name) but not which class the assignment was for. `fetch_courses` now also returns each course's `course_code`, the sync job stores it on the assignment as `course_code`, and the card shows it as a small class line under the title (e.g. **BIO 101**) — omitted when a course has no code. The connection-label pill is unchanged.
+
+Red — `Assignment.course_code`, the fetch key, the sync write, and the card markup don't exist yet:
+
+![Course-code tests failing — feature missing](docs/test-evidence/coursecode-red.png)
+
+Green — after adding the column, the fetch key, the sync write, and the card line:
+
+![Course-code tests passing](docs/test-evidence/coursecode-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

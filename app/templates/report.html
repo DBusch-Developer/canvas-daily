@@ -70,6 +70,7 @@
                 <h3 class="card__title">
                   <a href="/assignments/{{ a.id }}">{{ a.name }}</a>
                 </h3>
+                {% if a.course_code %}<p class="card__class">{{ a.course_code }}</p>{% endif %}
                 <div class="card__foot">
                   <span class="due">due {{ a.due_at }}</span>
                   {% if a.html_url %}
@@ -105,6 +106,7 @@
               <span class="course-pill">{{ a.connection.label }}</span>
             </div>
             <h3 class="card__title">{{ a.name }}</h3>
+            {% if a.course_code %}<p class="card__class">{{ a.course_code }}</p>{% endif %}
             <div class="card__foot">
               <span class="due">due {{ a.due_at }}</span>
               {% if a.html_url %}
