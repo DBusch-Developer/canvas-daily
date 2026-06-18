@@ -10,6 +10,7 @@ from sqlmodel import Session, SQLModel, select
 
 from app.db import make_engine
 from app.models import Assignment, Connection, User
+from app.web import get_canvas_client_factory
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("TEST_DATABASE_URL"),
@@ -102,7 +103,7 @@ def test_background_sync_keeps_connection_and_marks_error(engine, caplog):
 
 @pytest.fixture
 def app(engine):
-    from app.web import create_app, get_engine, get_canvas_client_factory
+    from app.web import create_app, get_engine
     application = create_app()
     application.dependency_overrides[get_engine] = lambda: engine
     application.dependency_overrides[get_canvas_client_factory] = lambda: (
@@ -147,9 +148,7 @@ def test_assignments_appear_after_background_sync(client, engine):
 
 def test_add_connection_failure_marks_error_and_keeps_it(client, app, engine):
     signup(client, email="bgfail@x.com")
-    app.dependency_overrides[
-        __import__("app.web", fromlist=["get_canvas_client_factory"]).get_canvas_client_factory
-    ] = lambda: (lambda: client_for(lambda r: httpx.Response(401, json={"e": 1})))
+    app.dependency_overrides[get_canvas_client_factory] = lambda: (lambda: client_for(lambda r: httpx.Response(401, json={"e": 1})))
     add_form(client)
     with Session(engine) as s:
         conn = s.exec(select(Connection)).first()

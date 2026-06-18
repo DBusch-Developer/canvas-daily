@@ -176,17 +176,6 @@ def create_app():
             return RedirectResponse("/login", status_code=303)
         return TEMPLATES.TemplateResponse(request, "connection_new.html", {})
 
-    @app.get("/connections/{connection_id}/setup")
-    def connection_setup(request: Request, connection_id: int,
-                         session: Session = Depends(get_session)):
-        user = _current_user(request, session)
-        if user is None:
-            return RedirectResponse("/login", status_code=303)
-        connection = session.get(Connection, connection_id)
-        if connection is None or connection.user_id != user.id:
-            raise HTTPException(status_code=404)
-        return RedirectResponse("/", status_code=303)
-
     @app.post("/connections")
     def add_connection(request: Request, background_tasks: BackgroundTasks,
                        label: str = Form(), base_url: str = Form(),
