@@ -179,6 +179,19 @@ def create_app():
         session.commit()
         return RedirectResponse("/connections", status_code=303)
 
+    @app.post("/connections/{connection_id}/delete")
+    def delete_connection(request: Request, connection_id: int,
+                          session: Session = Depends(get_session)):
+        user = _current_user(request, session)
+        if user is None:
+            return RedirectResponse("/login", status_code=303)
+        connection = session.get(Connection, connection_id)
+        if connection is None or connection.user_id != user.id:
+            raise HTTPException(status_code=404)
+        session.delete(connection)
+        session.commit()
+        return RedirectResponse("/connections", status_code=303)
+
     @app.get("/assignments/{assignment_id}")
     def detail(request: Request, assignment_id: int,
                session: Session = Depends(get_session)):

@@ -249,6 +249,36 @@ def test_settings_shows_empty_state(client):
     assert "Add account" in body
 
 
+def test_delete_connection_removes_it_and_its_assignments(client, engine):
+    signup(client, email="del@x.com")
+    seed_assignment(engine, "del@x.com")
+    with Session(engine) as s:
+        conn_id = s.exec(select(Connection)).first().id
+
+    resp = client.post(f"/connections/{conn_id}/delete", follow_redirects=False)
+    assert resp.status_code in (302, 303)
+
+    with Session(engine) as s:
+        assert s.exec(select(Connection)).first() is None
+        assert s.exec(select(Assignment)).first() is None
+
+
+def test_cannot_delete_another_users_connection(client, app, engine):
+    signup(client, email="owner2@x.com")
+    seed_assignment(engine, "owner2@x.com")
+    with Session(engine) as s:
+        conn_id = s.exec(select(Connection)).first().id
+
+    from fastapi.testclient import TestClient
+    intruder = TestClient(app)
+    signup(intruder, email="intruder2@x.com")
+
+    resp = intruder.post(f"/connections/{conn_id}/delete", follow_redirects=False)
+    assert resp.status_code == 404
+    with Session(engine) as s:
+        assert s.exec(select(Connection)).first() is not None
+
+
 def test_add_connection_persists_even_when_sync_fails(client, app, engine, caplog):
     import httpx
     signup(client, email="failsync@x.com")
