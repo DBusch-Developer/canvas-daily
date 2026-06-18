@@ -144,3 +144,13 @@ def test_run_daily_sync_covers_every_connection(session):
             select(Assignment).where(Assignment.connection_id == conn.id)
         ).all()
         assert len(stored) == 1
+
+
+def test_sync_sets_last_synced_at(session):
+    user = a_user(session, "stamp@x.com")
+    conn = a_connection(session, user.id)
+    assert conn.last_synced_at is None
+
+    sync_connection(session, conn, client_for(canvas_handler([(10, [assignment_json(1, "A")])])))
+
+    assert conn.last_synced_at is not None

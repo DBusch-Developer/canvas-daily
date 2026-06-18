@@ -29,6 +29,8 @@ def sync_connection(session, connection, client):
         )
         for parsed in parsed_list:
             _upsert(session, connection.id, parsed)
+    connection.last_synced_at = _now()
+    session.add(connection)
     session.flush()
 
 
