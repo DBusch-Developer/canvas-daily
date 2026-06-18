@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import datetime
 
@@ -230,7 +231,7 @@ def test_add_connection_auto_syncs_assignments(client, app, engine):
     assert "Lab report" in body
 
 
-def test_add_connection_persists_even_when_sync_fails(client, app, engine):
+def test_add_connection_persists_even_when_sync_fails(client, app, engine, caplog):
     import httpx
     signup(client, email="failsync@x.com")
 
@@ -241,13 +242,17 @@ def test_add_connection_persists_even_when_sync_fails(client, app, engine):
         transport=httpx.MockTransport(boom)
     )
 
-    resp = client.post("/connections", data={
-        "label": "Mine", "base_url": "https://school.test",
-        "account_type": "student", "access_token": "tok",
-    }, follow_redirects=False)
+    with caplog.at_level(logging.WARNING):
+        resp = client.post("/connections", data={
+            "label": "Mine", "base_url": "https://school.test",
+            "account_type": "student", "access_token": "tok",
+        }, follow_redirects=False)
     assert resp.status_code in (302, 303)
 
     with Session(engine) as s:
         assert s.exec(select(Connection)).first() is not None
     # Dashboard still renders, no crash.
     assert client.get("/").status_code == 200
+    # A warning was emitted identifying the connection — but never the token.
+    assert "sync failed" in caplog.text
+    assert "tok" not in caplog.text

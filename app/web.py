@@ -5,6 +5,7 @@ Pages are server-rendered Jinja2. Detail pages read from storage — no live
 Canvas call on click. The breakdown fires only when the button is pressed.
 """
 
+import logging
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,6 +24,8 @@ from app.db import make_engine
 from app.models import Assignment, Connection, User
 from app.reports import report_for_user
 from app.sync import sync_connection
+
+logger = logging.getLogger(__name__)
 
 TEMPLATES = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
@@ -158,8 +161,8 @@ def create_app():
             sync_connection(session, connection, canvas)
         except Exception:
             # Keep the connection; a bad token or Canvas outage must not lose it.
-            # Never surface or log the token. last_synced_at stays None as the flag.
-            pass
+            # Log enough to notice a failure, but never the token or URL.
+            logger.warning("sync failed for connection %s after add", connection.id)
         session.commit()
         return RedirectResponse("/", status_code=303)
 
