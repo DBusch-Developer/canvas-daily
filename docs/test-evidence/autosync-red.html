@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>sync-green</title>
+<title>autosync-red</title>
 <style type="text/css">
 .ansi2html-content { display: inline; white-space: pre; word-wrap: break-word; }
 .body_foreground { color: #AAAAAA; }
@@ -1130,17 +1130,29 @@
 </head>
 <body>
   <div class="frame">
-    <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>pytest — sync-green</div>
+    <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>pytest — autosync-red</div>
     <pre class="term"><span class="ansi1">============================= test session starts =============================</span>
 platform win32 -- Python 3.14.2, pytest-9.1.0, pluggy-1.6.0
 rootdir: C:\Users\Diana\Desktop\GitHub\canvas-daily
 configfile: pyproject.toml
 plugins: anyio-4.13.0
-collected 4 items
+collected 0 items / 1 error
 
-tests\test_sync.py <span class="ansi32">.</span><span class="ansi32">.</span><span class="ansi32">.</span><span class="ansi32">.</span><span class="ansi32">                                                  [100%]</span>
-
-<span class="ansi32">============================== </span><span class="ansi32"></span><span class="ansi1 ansi32">4 passed</span><span class="ansi32"> in 5.59s</span><span class="ansi32"> ==============================</span>
+=================================== ERRORS ====================================
+<span class="ansi31"></span><span class="ansi1 ansi31">___________________ ERROR collecting tests/test_autosync.py ___________________</span>
+<span class="ansi31">ImportError while importing test module 'C:\Users\Diana\Desktop\GitHub\canvas-daily\tests\test_autosync.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_autosync.py:25: in &lt;module&gt;
+    from app.web import create_app, get_canvas_client, get_session
+E   ImportError: cannot import name 'get_canvas_client' from 'app.web' (C:\Users\Diana\Desktop\GitHub\canvas-daily\app\web.py)</span>
+<span class="ansi36"></span><span class="ansi1 ansi36">=========================== short test summary info ===========================</span>
+<span class="ansi31">ERROR</span> tests/test_autosync.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+<span class="ansi31">============================== </span><span class="ansi31"></span><span class="ansi1 ansi31">1 error</span><span class="ansi31"> in 0.86s</span><span class="ansi31"> ===============================</span>
 </pre>
   </div>
 </body>

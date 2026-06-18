@@ -1146,13 +1146,13 @@ Traceback:
 ..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\importlib\__init__.py:88: in import_module
     return _bootstrap._gcd_import(name[level:], package, level)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests\test_e2e.py:12: in &lt;module&gt;
-    from app.web import create_app, get_canvas_client, get_groq_client, get_session
-E   ImportError: cannot import name 'get_canvas_client' from 'app.web' (C:\Users\Diana\Desktop\GitHub\canvas-daily\app\web.py)</span>
+tests\test_e2e.py:8: in &lt;module&gt;
+    from app.auth import verify_password
+E   ModuleNotFoundError: No module named 'app.auth'</span>
 <span class="ansi36"></span><span class="ansi1 ansi36">=========================== short test summary info ===========================</span>
 <span class="ansi31">ERROR</span> tests/test_e2e.py
 !!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
-<span class="ansi31">============================== </span><span class="ansi31"></span><span class="ansi1 ansi31">1 error</span><span class="ansi31"> in 0.87s</span><span class="ansi31"> ===============================</span>
+<span class="ansi31">============================== </span><span class="ansi31"></span><span class="ansi1 ansi31">1 error</span><span class="ansi31"> in 1.01s</span><span class="ansi31"> ===============================</span>
 </pre>
   </div>
 </body>
