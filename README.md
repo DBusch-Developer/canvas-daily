@@ -241,6 +241,18 @@ Green — after adding the column, the fetch key, the sync write, and the card l
 
 ![Course-code tests passing](docs/test-evidence/coursecode-green.png)
 
+**Layer 16 — guard null submission flags**
+
+Canvas can return a submission with `late`, `missing`, or `excused` as explicit JSON `null` (not just absent). `_parse` used `submission.get(key, False)`, which only defaults when the key is *missing* — a present `null` passed `None` straight through, and those assignment columns are `NOT NULL`, so the daily sync hit an integrity violation and rolled back, storing nothing (which also blocked the course-code backfill). The fix coerces null flags to `False`.
+
+Red — `_parse` lets a null flag through as `None`:
+
+![Null-flag test failing](docs/test-evidence/nullflags-red.png)
+
+Green — after coercing null `late`/`missing`/`excused` to `False`:
+
+![Null-flag test passing](docs/test-evidence/nullflags-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

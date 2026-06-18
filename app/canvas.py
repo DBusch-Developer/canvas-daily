@@ -69,10 +69,12 @@ def _parse(raw):
         "workflow_state": submission.get("workflow_state"),
         "score": submission.get("score"),  # null until graded — kept as None
         "submitted_at": _parse_dt(submission.get("submitted_at")),
-        # No submission means not late / not missing / not excused.
-        "late": submission.get("late", False),
-        "missing": submission.get("missing", False),
-        "excused": submission.get("excused", False),
+        # No submission — or an explicit null flag — means not late / missing /
+        # excused. `or False` coerces both a missing key and a present null to
+        # False, so these NOT NULL columns never receive None.
+        "late": submission.get("late") or False,
+        "missing": submission.get("missing") or False,
+        "excused": submission.get("excused") or False,
     }
 
 
