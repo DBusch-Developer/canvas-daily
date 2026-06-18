@@ -12,7 +12,7 @@ from pathlib import Path
 
 import httpx
 from fastapi import BackgroundTasks, Depends, FastAPI, Form, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
@@ -75,6 +75,13 @@ def _owned_assignment_or_404(session, assignment_id, user):
     if assignment is None or assignment.connection.user_id != user.id:
         raise HTTPException(status_code=404)
     return assignment
+
+
+def _owned_connection_or_404(session, connection_id, user):
+    connection = session.get(Connection, connection_id)
+    if connection is None or connection.user_id != user.id:
+        raise HTTPException(status_code=404)
+    return connection
 
 
 def run_connection_sync(engine, connection_id, client_factory):
@@ -204,12 +211,31 @@ def create_app():
         user = _current_user(request, session)
         if user is None:
             return RedirectResponse("/login", status_code=303)
-        connection = session.get(Connection, connection_id)
-        if connection is None or connection.user_id != user.id:
-            raise HTTPException(status_code=404)
+        connection = _owned_connection_or_404(session, connection_id, user)
         session.delete(connection)
         session.commit()
         return RedirectResponse("/connections", status_code=303)
+
+    @app.get("/connections/{connection_id}/setup")
+    def connection_setup(request: Request, connection_id: int,
+                         session: Session = Depends(get_session)):
+        user = _current_user(request, session)
+        if user is None:
+            return RedirectResponse("/login", status_code=303)
+        connection = _owned_connection_or_404(session, connection_id, user)
+        if connection.sync_status == "ok":
+            return RedirectResponse("/connections", status_code=303)
+        return TEMPLATES.TemplateResponse(
+            request, "setup.html", {"connection": connection})
+
+    @app.get("/connections/{connection_id}/status")
+    def connection_status(request: Request, connection_id: int,
+                          session: Session = Depends(get_session)):
+        user = _current_user(request, session)
+        if user is None:
+            raise HTTPException(status_code=401)
+        connection = _owned_connection_or_404(session, connection_id, user)
+        return JSONResponse({"status": connection.sync_status})
 
     @app.get("/assignments/{assignment_id}")
     def detail(request: Request, assignment_id: int,

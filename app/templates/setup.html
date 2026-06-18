@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Setting up · Canvas Daily{% endblock %}
+{% block body %}
+  <section class="brief brief--tight" style="text-align:center;">
+    <p class="eyebrow">Account command center</p>
+    <h1 class="brief__title">Setting up {{ connection.label }}</h1>
+    <p class="hero__sub" id="setup-msg">Pulling your assignments from Canvas — this can take a few seconds…</p>
+
+    <div id="setup-spinner" class="spinner" aria-hidden="true"></div>
+
+    <div id="setup-actions" hidden>
+      <a class="btn btn--primary" href="/connections">Go to your accounts</a>
+    </div>
+  </section>
+
+  <style>
+    .spinner { width:42px; height:42px; margin:28px auto; border:4px solid #2a2a2a;
+               border-top-color:#7c5cff; border-radius:50%; animation:spin .9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+
+  <script>
+    (function () {
+      var statusUrl = "/connections/{{ connection.id }}/status";
+      var msg = document.getElementById("setup-msg");
+      var spinner = document.getElementById("setup-spinner");
+      var actions = document.getElementById("setup-actions");
+      var tries = 0, maxTries = 30;
+      function settle(text) { msg.textContent = text; spinner.hidden = true; actions.hidden = false; }
+      function poll() {
+        tries += 1;
+        fetch(statusUrl, { headers: { "Accept": "application/json" } })
+          .then(function (r) { return r.ok ? r.json() : { status: "pending" }; })
+          .then(function (d) {
+            if (d.status === "ok") { window.location = "/connections"; return; }
+            if (d.status === "error") { settle("We couldn't finish pulling your assignments. Head to your accounts and try removing and re-adding it."); return; }
+            if (tries >= maxTries) { settle("This is taking longer than expected. Head to your accounts — it may finish shortly."); return; }
+            setTimeout(poll, 1500);
+          })
+          .catch(function () {
+            if (tries >= maxTries) { settle("This is taking longer than expected. Head to your accounts — it may finish shortly."); return; }
+            setTimeout(poll, 1500);
+          });
+      }
+      poll();
+    })();
+  </script>
+{% endblock %}

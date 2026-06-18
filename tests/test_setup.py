@@ -154,3 +154,47 @@ def test_add_connection_failure_marks_error_and_keeps_it(client, app, engine):
         conn = s.exec(select(Connection)).first()
         assert conn is not None
         assert conn.sync_status == "error"
+
+
+def test_status_reports_ok_after_sync(client, engine):
+    signup(client, email="st@x.com")
+    add_form(client)
+    with Session(engine) as s:
+        conn_id = s.exec(select(Connection)).first().id
+    body = client.get(f"/connections/{conn_id}/status").json()
+    assert body["status"] == "ok"
+
+
+def test_setup_page_renders_then_redirects_when_done(client, engine):
+    signup(client, email="sp@x.com")
+    # Pre-create a still-pending connection directly (no background run).
+    with Session(engine) as s:
+        user = s.exec(select(User).where(User.email == "sp@x.com")).one()
+        conn = Connection(user_id=user.id, label="Mine", base_url=BASE,
+                          account_type="student", access_token="tok",
+                          sync_status="pending")
+        s.add(conn); s.commit(); s.refresh(conn)
+        conn_id = conn.id
+    page = client.get(f"/connections/{conn_id}/setup")
+    assert page.status_code == 200
+    assert "Setting up" in page.text
+    # Once marked ok, the setup page bounces to the accounts list.
+    with Session(engine) as s:
+        c = s.get(Connection, conn_id); c.sync_status = "ok"; s.add(c); s.commit()
+    done = client.get(f"/connections/{conn_id}/setup", follow_redirects=False)
+    assert done.status_code in (302, 303)
+    assert done.headers["location"] == "/connections"
+
+
+def test_cannot_view_another_users_setup_or_status(client, app, engine):
+    signup(client, email="ownersetup@x.com")
+    add_form(client)
+    with Session(engine) as s:
+        conn_id = s.exec(select(Connection)).first().id
+
+    from fastapi.testclient import TestClient
+    intruder = TestClient(app)
+    signup(intruder, email="intrudersetup@x.com")
+
+    assert intruder.get(f"/connections/{conn_id}/setup").status_code == 404
+    assert intruder.get(f"/connections/{conn_id}/status").status_code == 404
