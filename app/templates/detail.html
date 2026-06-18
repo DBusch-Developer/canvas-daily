@@ -14,7 +14,7 @@
     <p class="eyebrow">Mission brief</p>
     <h1 class="brief__title">{{ a.name }}</h1>
     <div class="brief__tags">
-      <span class="course-pill course-pill--lg">{{ a.connection.label }}</span>
+      <span class="course-pill course-pill--lg">{{ a.course_short or a.connection.label }}</span>
       <span class="badge badge--{{ tone }}">{{ status }}</span>
       {% if a.is_quiz %}<span class="tag tag--quiz">Quiz</span>{% endif %}
     </div>

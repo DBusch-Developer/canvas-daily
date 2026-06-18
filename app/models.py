@@ -3,6 +3,7 @@ stored assignments. The access token is encrypted at rest via a column type
 that encrypts on write and decrypts on read, so callers only ever see plaintext.
 """
 
+import re
 from datetime import datetime, timezone
 
 from sqlalchemy import JSON, Column
@@ -91,3 +92,13 @@ class Assignment(SQLModel, table=True):
     def is_quiz(self) -> bool:
         """True when Canvas marks this assignment as a quiz."""
         return "online_quiz" in self.submission_types
+
+    @property
+    def course_short(self) -> str:
+        """Leading code token of the course, e.g. 'CSA250'. Empty when no code."""
+        return self.course_code.split()[0] if self.course_code else ""
+
+    @property
+    def course_trimmed(self) -> str:
+        """course_code without a trailing '(...)' section number."""
+        return re.sub(r"\s*\([^)]*\)\s*$", "", self.course_code).strip()

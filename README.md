@@ -253,6 +253,18 @@ Green — after coercing null `late`/`missing`/`excused` to `False`:
 
 ![Null-flag test passing](docs/test-evidence/nullflags-green.png)
 
+**Layer 17 — class label: short code on detail, trimmed on card**
+
+The stored `course_code` is verbose (`CSA250 Intro Artificial Intelligence (22255)`). Two pure properties clean it up: `course_short` (leading token, `CSA250`) and `course_trimmed` (drops the trailing `(22255)`). The detail page header pill now shows the short code instead of the redundant connection label (the Connection metacard stays), and the dashboard card shows the trimmed course string.
+
+Red — `course_short` / `course_trimmed` and the markup that uses them don't exist yet:
+
+![Class-label tests failing](docs/test-evidence/classlabel-red.png)
+
+Green — after adding the properties and updating the pill and card:
+
+![Class-label tests passing](docs/test-evidence/classlabel-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables
