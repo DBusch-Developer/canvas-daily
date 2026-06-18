@@ -111,27 +111,27 @@ Green — after writing the models, engine, encrypted-token column, and report q
 
 **Layer 5 — end-to-end (the full user flow)**
 
-Drives the whole product: sign up, log in, add a connection, view the grouped report, open a stored detail page, and press "Break this down" for the AI breakdown. Plus two guardrails — the detail page renders from stored data with **no live Canvas call**, and a logged-out user is **blocked from the report** (and from another user's assignment). Runs against the Neon test branch; skips in CI without it.
+Drives the whole product: sign up, log in, add a connection, view the grouped report, open a stored detail page, and press "Break this down" for the AI breakdown. Plus guardrails — the detail page renders from stored data with **no live Canvas call**, and a logged-out user is **blocked from the report** (and from another user's assignment). It now also covers **auto-sync on connect** (adding a connection immediately pulls its assignments, and the connection persists even if that sync fails — with a token-free warning logged), and the **accounts list** (list view, empty state, and removing a connection). Runs against the Neon test branch; skips in CI without it.
 
-Red — the web app and auth module don't exist yet:
+Red — the auto-sync wiring isn't written yet, so the test module can't even import (`get_canvas_client` missing) — an honest feature-missing red, captured live before the code:
 
-![E2E tests failing — collection error, modules missing](docs/test-evidence/e2e-red.png)
+![E2E tests failing — collection error, get_canvas_client missing](docs/test-evidence/e2e-red.png)
 
-Green — after writing the FastAPI app, auth, sessions, and the Jinja2 pages:
+Green — after writing the FastAPI routes, auto-sync on add, the settings/accounts list, the remove route, and the Jinja2 pages (14 tests):
 
-![E2E tests passing — eight green passes](docs/test-evidence/e2e-green.png)
+![E2E tests passing — fourteen green passes](docs/test-evidence/e2e-green.png)
 
 **Layer 6 — daily sync job (Canvas mocked, stored to the Neon test branch)**
 
-The pre-fetch that fills storage: for every connection, list its active courses, fetch each course's assignments, and store full detail — so detail pages later read from storage with no live call. Four behaviors: course pagination, storing across a connection's courses, idempotent **upsert** (re-runs update, never duplicate), and one path that covers one connection or many.
+The pre-fetch that fills storage: for every connection, list its active courses, fetch each course's assignments, and store full detail — so detail pages later read from storage with no live call. Five behaviors: course pagination, storing across a connection's courses, idempotent **upsert** (re-runs update, never duplicate), one path that covers one connection or many, and **stamping `last_synced_at`** on a successful run (which the accounts list surfaces).
 
-Red — the sync module and `fetch_courses` don't exist yet:
+Red — the `last_synced_at` stamp isn't written yet, so that test fails (the column is missing), captured live before the code:
 
-![Daily sync tests failing — collection error, modules missing](docs/test-evidence/sync-red.png)
+![Daily sync tests failing — last_synced_at not yet stamped](docs/test-evidence/sync-red.png)
 
-Green — after writing `fetch_courses`, `sync_connection`, and `run_daily_sync`:
+Green — after writing `fetch_courses`, `sync_connection` (now stamping `last_synced_at`), and `run_daily_sync` (5 tests):
 
-![Daily sync tests passing — four green passes](docs/test-evidence/sync-green.png)
+![Daily sync tests passing — five green passes](docs/test-evidence/sync-green.png)
 
 **Layer 7 — daily email (SMTP mocked)**
 

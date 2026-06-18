@@ -1136,23 +1136,61 @@ platform win32 -- Python 3.14.2, pytest-9.1.0, pluggy-1.6.0
 rootdir: C:\Users\Diana\Desktop\GitHub\canvas-daily
 configfile: pyproject.toml
 plugins: anyio-4.13.0
-collected 0 items / 1 error
+collected 5 items
 
-=================================== ERRORS ====================================
-<span class="ansi31"></span><span class="ansi1 ansi31">_____________________ ERROR collecting tests/test_sync.py _____________________</span>
-<span class="ansi31">ImportError while importing test module 'C:\Users\Diana\Desktop\GitHub\canvas-daily\tests\test_sync.py'.
-Hint: make sure your test modules/packages have valid Python names.
-Traceback:
-..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\importlib\__init__.py:88: in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests\test_sync.py:8: in &lt;module&gt;
-    from app.canvas import fetch_courses
-E   ImportError: cannot import name 'fetch_courses' from 'app.canvas' (C:\Users\Diana\Desktop\GitHub\canvas-daily\app\canvas.py)</span>
+tests\test_sync.py <span class="ansi32">.</span><span class="ansi32">.</span><span class="ansi32">.</span><span class="ansi32">.</span><span class="ansi31">F</span><span class="ansi31">                                                 [100%]</span>
+
+================================== FAILURES ===================================
+<span class="ansi31"></span><span class="ansi1 ansi31">________________________ test_sync_sets_last_synced_at ________________________</span>
+
+session = &lt;sqlmodel.orm.session.Session object at 0x000002D05E5B22C0&gt;
+
+    <span class="ansi94">def</span><span class="ansi90"> </span><span class="ansi92">test_sync_sets_last_synced_at</span>(session):<span class="ansi90"></span>
+        user = a_user(session, <span class="ansi33">"</span><span class="ansi33">stamp@x.com</span><span class="ansi33">"</span>)<span class="ansi90"></span>
+        conn = a_connection(session, user.id)<span class="ansi90"></span>
+&gt;       <span class="ansi94">assert</span> conn.last_synced_at <span class="ansi95">is</span> <span class="ansi94">None</span><span class="ansi90"></span>
+               ^^^^^^^^^^^^^^^^^^^<span class="ansi90"></span>
+
+<span class="ansi1"></span><span class="ansi1 ansi31">tests\test_sync.py</span>:152: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Connection(user_id=4, label='Mine', base_url='https://school.test', account_type='student', access_token='tok', id=5, created_at=datetime.datetime(2026, 6, 18, 3, 34, 17, 981479))
+item = 'last_synced_at'
+
+    <span class="ansi94">def</span><span class="ansi90"> </span><span class="ansi92">__getattr__</span>(<span class="ansi96">self</span>, item: <span class="ansi96">str</span>) -&gt; Any:<span class="ansi90"></span>
+        private_attributes = <span class="ansi96">object</span>.<span class="ansi92">__getattribute__</span>(<span class="ansi96">self</span>, <span class="ansi33">'</span><span class="ansi33">__private_attributes__</span><span class="ansi33">'</span>)<span class="ansi90"></span>
+        <span class="ansi94">if</span> item <span class="ansi95">in</span> private_attributes:<span class="ansi90"></span>
+            attribute = private_attributes[item]<span class="ansi90"></span>
+            <span class="ansi94">if</span> <span class="ansi96">hasattr</span>(attribute, <span class="ansi33">'</span><span class="ansi33">__get__</span><span class="ansi33">'</span>):<span class="ansi90"></span>
+                <span class="ansi94">return</span> attribute.<span class="ansi92">__get__</span>(<span class="ansi96">self</span>, <span class="ansi96">type</span>(<span class="ansi96">self</span>))  <span class="ansi90"># type: ignore</span><span class="ansi90"></span>
+    <span class="ansi90"></span>
+            <span class="ansi94">try</span>:<span class="ansi90"></span>
+                <span class="ansi90"># Note: self.__pydantic_private__ cannot be None if self.__private_attributes__ has items</span><span class="ansi90"></span>
+                <span class="ansi94">return</span> <span class="ansi96">self</span>.__pydantic_private__[item]  <span class="ansi90"># type: ignore</span><span class="ansi90"></span>
+            <span class="ansi94">except</span> <span class="ansi96">KeyError</span> <span class="ansi94">as</span> exc:<span class="ansi90"></span>
+                <span class="ansi94">raise</span> <span class="ansi96">AttributeError</span>(<span class="ansi33">f</span><span class="ansi33">'</span><span class="ansi33">{</span><span class="ansi96">type</span>(<span class="ansi96">self</span>).<span class="ansi91">__name__</span><span class="ansi33">!r}</span><span class="ansi33"> object has no attribute </span><span class="ansi33">{</span>item<span class="ansi33">!r}</span><span class="ansi33">'</span>) <span class="ansi94">from</span><span class="ansi90"> </span><span class="ansi4"></span><span class="ansi4 ansi96">exc</span><span class="ansi90"></span>
+        <span class="ansi94">else</span>:<span class="ansi90"></span>
+            <span class="ansi90"># `__pydantic_extra__` can fail to be set if the model is not yet fully initialized.</span><span class="ansi90"></span>
+            <span class="ansi90"># See `BaseModel.__repr_args__` for more details</span><span class="ansi90"></span>
+            <span class="ansi94">try</span>:<span class="ansi90"></span>
+                pydantic_extra = <span class="ansi96">object</span>.<span class="ansi92">__getattribute__</span>(<span class="ansi96">self</span>, <span class="ansi33">'</span><span class="ansi33">__pydantic_extra__</span><span class="ansi33">'</span>)<span class="ansi90"></span>
+            <span class="ansi94">except</span> <span class="ansi96">AttributeError</span>:<span class="ansi90"></span>
+                pydantic_extra = <span class="ansi94">None</span><span class="ansi90"></span>
+    <span class="ansi90"></span>
+            <span class="ansi94">if</span> pydantic_extra <span class="ansi95">and</span> item <span class="ansi95">in</span> pydantic_extra:<span class="ansi90"></span>
+                <span class="ansi94">return</span> pydantic_extra[item]<span class="ansi90"></span>
+            <span class="ansi94">else</span>:<span class="ansi90"></span>
+                <span class="ansi94">if</span> <span class="ansi96">hasattr</span>(<span class="ansi96">self</span>.<span class="ansi91">__class__</span>, item):<span class="ansi90"></span>
+                    <span class="ansi94">return</span> <span class="ansi96">super</span>().<span class="ansi92">__getattribute__</span>(item)  <span class="ansi90"># Raises AttributeError if appropriate</span><span class="ansi90"></span>
+                <span class="ansi94">else</span>:<span class="ansi90"></span>
+                    <span class="ansi90"># this is the current error</span><span class="ansi90"></span>
+&gt;                   <span class="ansi94">raise</span> <span class="ansi96">AttributeError</span>(<span class="ansi33">f</span><span class="ansi33">'</span><span class="ansi33">{</span><span class="ansi96">type</span>(<span class="ansi96">self</span>).<span class="ansi91">__name__</span><span class="ansi33">!r}</span><span class="ansi33"> object has no attribute </span><span class="ansi33">{</span>item<span class="ansi33">!r}</span><span class="ansi33">'</span>)<span class="ansi90"></span>
+<span class="ansi1"></span><span class="ansi1 ansi31">E                   AttributeError: 'Connection' object has no attribute 'last_synced_at'</span>
+
+<span class="ansi1"></span><span class="ansi1 ansi31">.venv\Lib\site-packages\pydantic\main.py</span>:1042: AttributeError
 <span class="ansi36"></span><span class="ansi1 ansi36">=========================== short test summary info ===========================</span>
-<span class="ansi31">ERROR</span> tests/test_sync.py
-!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
-<span class="ansi31">============================== </span><span class="ansi31"></span><span class="ansi1 ansi31">1 error</span><span class="ansi31"> in 1.00s</span><span class="ansi31"> ===============================</span>
+<span class="ansi31">FAILED</span> tests/test_sync.py::<span class="ansi1">test_sync_sets_last_synced_at</span> - AttributeError: 'Connection' object has no attribute 'last_synced_at'
+<span class="ansi31">========================= </span><span class="ansi31"></span><span class="ansi1 ansi31">1 failed</span>, <span class="ansi32">4 passed</span><span class="ansi31"> in 9.58s</span><span class="ansi31"> =========================</span>
 </pre>
   </div>
 </body>
