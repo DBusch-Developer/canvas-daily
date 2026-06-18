@@ -22,6 +22,8 @@
             <span class="course-pill">{{ c.account_type }}</span>
             {% if c.last_synced_at %}
               <span class="badge badge--done">Synced {{ c.last_synced_at.strftime('%b %d, %H:%M') }} UTC</span>
+            {% elif c.sync_status == 'error' %}
+              <span class="badge badge--danger">Sync failed</span>
             {% else %}
               <span class="badge badge--danger">Not synced yet</span>
             {% endif %}
@@ -45,7 +47,6 @@
     <div class="empty">
       <p class="empty__title">No accounts yet</p>
       <p class="empty__sub">Add a Canvas connection to start pulling assignments into your report.</p>
-      <a class="btn btn--primary" href="/connections/new">+ Add account</a>
     </div>
   {% endif %}
 {% endblock %}

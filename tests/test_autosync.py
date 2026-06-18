@@ -184,3 +184,16 @@ def test_cannot_delete_another_users_connection(client, app, engine):
     assert resp.status_code == 404
     with Session(engine) as s:
         assert s.exec(select(Connection)).first() is not None
+
+
+def test_settings_shows_error_badge_on_failed_sync(client, engine):
+    signup(client, email="errbadge@x.com")
+    seed_assignment(engine, "errbadge@x.com")
+    with Session(engine) as s:
+        conn = s.exec(select(Connection)).first()
+        conn.sync_status = "error"
+        conn.last_synced_at = None
+        s.add(conn); s.commit()
+
+    body = client.get("/connections").text
+    assert "Sync failed" in body
