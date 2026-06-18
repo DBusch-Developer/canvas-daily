@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
-from fastapi import Depends, FastAPI, Form, HTTPException, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -40,8 +40,12 @@ def _get_engine():
     return _engine
 
 
-def get_session():
-    with Session(_get_engine()) as session:
+def get_engine():
+    return _get_engine()
+
+
+def get_session(engine=Depends(get_engine)):
+    with Session(engine) as session:
         yield session
 
 
@@ -53,12 +57,8 @@ def get_groq_client():
         client.close()
 
 
-def get_canvas_client():
-    client = httpx.Client(timeout=30.0)
-    try:
-        yield client
-    finally:
-        client.close()
+def get_canvas_client_factory():
+    return lambda: httpx.Client(timeout=30.0)
 
 
 def _now():
@@ -176,11 +176,24 @@ def create_app():
             return RedirectResponse("/login", status_code=303)
         return TEMPLATES.TemplateResponse(request, "connection_new.html", {})
 
+    @app.get("/connections/{connection_id}/setup")
+    def connection_setup(request: Request, connection_id: int,
+                         session: Session = Depends(get_session)):
+        user = _current_user(request, session)
+        if user is None:
+            return RedirectResponse("/login", status_code=303)
+        connection = session.get(Connection, connection_id)
+        if connection is None or connection.user_id != user.id:
+            raise HTTPException(status_code=404)
+        return RedirectResponse("/", status_code=303)
+
     @app.post("/connections")
-    def add_connection(request: Request, label: str = Form(), base_url: str = Form(),
+    def add_connection(request: Request, background_tasks: BackgroundTasks,
+                       label: str = Form(), base_url: str = Form(),
                        account_type: str = Form(), access_token: str = Form(),
                        session: Session = Depends(get_session),
-                       canvas: httpx.Client = Depends(get_canvas_client)):
+                       engine=Depends(get_engine),
+                       client_factory=Depends(get_canvas_client_factory)):
         user = _current_user(request, session)
         if user is None:
             return RedirectResponse("/login", status_code=303)
@@ -189,15 +202,12 @@ def create_app():
             account_type=account_type, access_token=access_token,
         )
         session.add(connection)
-        session.flush()  # assign connection.id before syncing
-        try:
-            sync_connection(session, connection, canvas)
-        except Exception:
-            # Keep the connection; a bad token or Canvas outage must not lose it.
-            # Log enough to notice a failure, but never the token or URL.
-            logger.warning("sync failed for connection %s after add", connection.id)
         session.commit()
-        return RedirectResponse("/connections", status_code=303)
+        session.refresh(connection)
+        background_tasks.add_task(
+            run_connection_sync, engine, connection.id, client_factory)
+        return RedirectResponse(
+            f"/connections/{connection.id}/setup", status_code=303)
 
     @app.post("/connections/{connection_id}/delete")
     def delete_connection(request: Request, connection_id: int,

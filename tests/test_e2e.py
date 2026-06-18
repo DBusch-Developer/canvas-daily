@@ -8,7 +8,7 @@ from sqlmodel import Session, SQLModel, select
 from app.auth import verify_password
 from app.db import make_engine
 from app.models import Assignment, Connection, User
-from app.web import create_app, get_canvas_client, get_groq_client, get_session
+from app.web import create_app, get_canvas_client_factory, get_engine, get_groq_client
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("TEST_DATABASE_URL"),
@@ -36,18 +36,11 @@ def wipe(engine):
 def app(engine):
     import httpx
     application = create_app()
-
-    def _get_session():
-        with Session(engine) as s:
-            yield s
-
-    def _empty_canvas():
-        return httpx.Client(transport=httpx.MockTransport(
-            lambda request: httpx.Response(200, json=[])
-        ))
-
-    application.dependency_overrides[get_session] = _get_session
-    application.dependency_overrides[get_canvas_client] = _empty_canvas
+    application.dependency_overrides[get_engine] = lambda: engine
+    application.dependency_overrides[get_canvas_client_factory] = lambda: (
+        lambda: httpx.Client(transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, json=[])))
+    )
     return application
 
 

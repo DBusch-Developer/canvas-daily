@@ -11,7 +11,6 @@ daily-sync layers; the web flow runs through a real FastAPI TestClient against
 the Neon test branch.
 """
 
-import logging
 import os
 from datetime import datetime
 
@@ -22,7 +21,7 @@ from sqlmodel import Session, SQLModel, select
 from app.db import make_engine
 from app.models import Assignment, Connection, User
 from app.sync import sync_connection
-from app.web import create_app, get_canvas_client, get_session
+from app.web import create_app, get_canvas_client_factory, get_engine
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("TEST_DATABASE_URL"),
@@ -76,18 +75,11 @@ def wipe(engine):
 @pytest.fixture
 def app(engine):
     application = create_app()
-
-    def _get_session():
-        with Session(engine) as s:
-            yield s
-
-    def _empty_canvas():
-        return httpx.Client(transport=httpx.MockTransport(
-            lambda request: httpx.Response(200, json=[])
-        ))
-
-    application.dependency_overrides[get_session] = _get_session
-    application.dependency_overrides[get_canvas_client] = _empty_canvas
+    application.dependency_overrides[get_engine] = lambda: engine
+    application.dependency_overrides[get_canvas_client_factory] = lambda: (
+        lambda: httpx.Client(transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, json=[])))
+    )
     return application
 
 
@@ -144,60 +136,6 @@ def test_sync_stamps_last_synced_at(engine):
         s.commit(); s.refresh(conn)
 
         assert conn.last_synced_at is not None
-
-
-def test_add_connection_auto_syncs_assignments(client, app, engine):
-    signup(client, email="auto@x.com")
-
-    def handler(request):
-        path = request.url.path
-        if path.endswith("/courses"):
-            return httpx.Response(200, json=[{"id": 10, "name": "Bio"}])
-        if path.endswith("/courses/10/assignments"):
-            return httpx.Response(200, json=[{
-                "id": 1, "name": "Lab report", "due_at": "2026-06-20T23:59:00Z",
-                "points_possible": 25, "submission_types": ["online_upload"],
-                "html_url": "https://school.test/a/1", "description": "<p>Do it.</p>",
-            }])
-        return httpx.Response(200, json=[])
-
-    app.dependency_overrides[get_canvas_client] = lambda: httpx.Client(
-        transport=httpx.MockTransport(handler)
-    )
-
-    client.post("/connections", data={
-        "label": "Mine", "base_url": "https://school.test",
-        "account_type": "student", "access_token": "tok",
-    }, follow_redirects=False)
-
-    body = client.get("/").text
-    assert "Lab report" in body
-
-
-def test_add_connection_persists_even_when_sync_fails(client, app, engine, caplog):
-    signup(client, email="failsync@x.com")
-
-    def boom(request):
-        return httpx.Response(401, json={"errors": ["bad token"]})
-
-    app.dependency_overrides[get_canvas_client] = lambda: httpx.Client(
-        transport=httpx.MockTransport(boom)
-    )
-
-    with caplog.at_level(logging.WARNING):
-        resp = client.post("/connections", data={
-            "label": "Mine", "base_url": "https://school.test",
-            "account_type": "student", "access_token": "tok",
-        }, follow_redirects=False)
-    assert resp.status_code in (302, 303)
-
-    with Session(engine) as s:
-        assert s.exec(select(Connection)).first() is not None
-    # Dashboard still renders, no crash.
-    assert client.get("/").status_code == 200
-    # A warning was emitted identifying the connection — but never the token.
-    assert "sync failed" in caplog.text
-    assert "tok" not in caplog.text
 
 
 def test_settings_lists_connections(client, engine):

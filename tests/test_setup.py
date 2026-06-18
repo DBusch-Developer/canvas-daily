@@ -98,3 +98,60 @@ def test_background_sync_keeps_connection_and_marks_error(engine, caplog):
         assert conn is not None
         assert conn.sync_status == "error"
     assert "secret-token" not in caplog.text
+
+
+@pytest.fixture
+def app(engine):
+    from app.web import create_app, get_engine, get_canvas_client_factory
+    application = create_app()
+    application.dependency_overrides[get_engine] = lambda: engine
+    application.dependency_overrides[get_canvas_client_factory] = lambda: (
+        lambda: client_for(canvas_ok)
+    )
+    return application
+
+
+@pytest.fixture
+def client(app):
+    from fastapi.testclient import TestClient
+    return TestClient(app)
+
+
+def signup(client, email="parent@x.com", password="hunter2pw"):
+    return client.post("/signup", data={"email": email, "password": password},
+                       follow_redirects=False)
+
+
+def add_form(client, label="Mine"):
+    return client.post("/connections", data={
+        "label": label, "base_url": BASE,
+        "account_type": "student", "access_token": "tok",
+    }, follow_redirects=False)
+
+
+def test_add_connection_redirects_to_setup(client, engine):
+    signup(client, email="setup@x.com")
+    resp = add_form(client)
+    assert resp.status_code in (302, 303)
+    with Session(engine) as s:
+        conn_id = s.exec(select(Connection)).first().id
+    assert resp.headers["location"] == f"/connections/{conn_id}/setup"
+
+
+def test_assignments_appear_after_background_sync(client, engine):
+    signup(client, email="bg@x.com")
+    add_form(client)  # TestClient runs the background task after the response
+    body = client.get("/").text
+    assert "Lab report" in body
+
+
+def test_add_connection_failure_marks_error_and_keeps_it(client, app, engine):
+    signup(client, email="bgfail@x.com")
+    app.dependency_overrides[
+        __import__("app.web", fromlist=["get_canvas_client_factory"]).get_canvas_client_factory
+    ] = lambda: (lambda: client_for(lambda r: httpx.Response(401, json={"e": 1})))
+    add_form(client)
+    with Session(engine) as s:
+        conn = s.exec(select(Connection)).first()
+        assert conn is not None
+        assert conn.sync_status == "error"
