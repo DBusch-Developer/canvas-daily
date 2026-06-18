@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Accounts · Canvas Daily{% endblock %}
+{% block body %}
+  <a class="back-link" href="/">← Back to dashboard</a>
+
+  <section class="brief brief--tight">
+    <p class="eyebrow">Account command center</p>
+    <h1 class="brief__title">Connected accounts</h1>
+    <p class="hero__sub">The Canvas accounts feeding your daily report.</p>
+  </section>
+
+  <div class="panel__head" style="display:flex;justify-content:space-between;align-items:center;">
+    <h2 class="panel__title">Your accounts</h2>
+    <a class="btn btn--primary" href="/connections/new">+ Add account</a>
+  </div>
+
+  {% if connections %}
+    <ul class="cards">
+      {% for c in connections %}
+        <li class="card">
+          <div class="card__top">
+            <span class="course-pill">{{ c.account_type }}</span>
+            {% if c.last_synced_at %}
+              <span class="badge badge--done">Synced {{ c.last_synced_at.strftime('%b %d, %H:%M') }} UTC</span>
+            {% else %}
+              <span class="badge badge--danger">Not synced yet</span>
+            {% endif %}
+          </div>
+          <h3 class="card__title">{{ c.label }}</h3>
+          <div class="card__foot">
+            <span class="due">{{ c.base_url }}</span>
+            <span>{{ c.assignments | length }} assignment{{ '' if c.assignments | length == 1 else 's' }}</span>
+          </div>
+          {% if not c.last_synced_at %}
+            <p class="field__hint">We couldn't pull assignments yet — they'll appear after the next daily sync.</p>
+          {% endif %}
+          <form method="post" action="/connections/{{ c.id }}/delete"
+                onsubmit="return confirm('Remove this account and its assignments?');">
+            <button class="btn btn--ghost btn--sm" type="submit">Remove</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty">
+      <p class="empty__title">No accounts yet</p>
+      <p class="empty__sub">Add a Canvas connection to start pulling assignments into your report.</p>
+      <a class="btn btn--primary" href="/connections/new">+ Add account</a>
+    </div>
+  {% endif %}
+{% endblock %}

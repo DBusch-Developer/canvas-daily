@@ -231,6 +231,24 @@ def test_add_connection_auto_syncs_assignments(client, app, engine):
     assert "Lab report" in body
 
 
+def test_settings_lists_connections(client, engine):
+    signup(client, email="settings@x.com")
+    seed_assignment(engine, "settings@x.com")  # creates a "Mine" connection
+
+    body = client.get("/connections").text
+    assert "Mine" in body
+    assert "https://school.test" in body
+    assert "Add account" in body
+
+
+def test_settings_shows_empty_state(client):
+    signup(client, email="noaccts@x.com")
+
+    body = client.get("/connections").text
+    assert "No accounts yet" in body
+    assert "Add account" in body
+
+
 def test_add_connection_persists_even_when_sync_fails(client, app, engine, caplog):
     import httpx
     signup(client, email="failsync@x.com")

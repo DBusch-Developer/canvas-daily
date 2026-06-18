@@ -137,6 +137,19 @@ def create_app():
         buckets = report_for_user(session, user.id, _now())
         return TEMPLATES.TemplateResponse(request, "report.html", {"buckets": buckets})
 
+    @app.get("/connections")
+    def connections_list(request: Request, session: Session = Depends(get_session)):
+        user = _current_user(request, session)
+        if user is None:
+            return RedirectResponse("/login", status_code=303)
+        connections = session.exec(
+            select(Connection)
+            .where(Connection.user_id == user.id)
+            .order_by(Connection.created_at)
+        ).all()
+        return TEMPLATES.TemplateResponse(
+            request, "settings.html", {"connections": connections})
+
     @app.get("/connections/new")
     def connection_form(request: Request, session: Session = Depends(get_session)):
         if _current_user(request, session) is None:
@@ -164,7 +177,7 @@ def create_app():
             # Log enough to notice a failure, but never the token or URL.
             logger.warning("sync failed for connection %s after add", connection.id)
         session.commit()
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/connections", status_code=303)
 
     @app.get("/assignments/{assignment_id}")
     def detail(request: Request, assignment_id: int,
