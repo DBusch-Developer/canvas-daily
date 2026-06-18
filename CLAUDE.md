@@ -70,6 +70,14 @@ One red + one green **per layer** — not per individual test. `.playwright-mcp/
 - **CI** (`.github/workflows/ci.yml`) runs the same check and the tests on every push and PR — so a bypassed local commit still gets caught on GitHub.
 - What the machine can't check: that the red was captured *live, before* the code. That stays on you and me to honor.
 
+**New feature work becomes its own layer — never folded into an existing one.**
+Any change that adds TDD'd behavior gets:
+- its **own** `tests/test_<label>.py` (check_evidence derives one layer per test file, so a new file is a new enforced layer),
+- its **own numbered README "Layer N — …" section** in the "Test evidence" list, in the same format as the others: a short TDD description, then the red fail screenshot, then the green pass screenshot,
+- its **own** `<label>-red.png` / `<label>-green.png`, captured live (red before the code exists).
+
+Do **not** satisfy the evidence rule by adding tests to an existing `test_<label>.py` and overwriting that layer's screenshots/captions — that hides the new work and is treated as "nothing new in the README." Adding a test to an existing file is only correct when it's a genuine regression/extension of *that same layer's* behavior. If new tests were temporarily parked in an existing file, move them into a new `test_<label>.py` and restore the original layer's tests, images, and captions before finishing.
+
 ## Don't
 - Don't invent assignment requirements Canvas doesn't hold. Surface what the instructor put in Canvas — nothing more.
 - Don't add HTMX or new frameworks for the core build. Server-rendered Jinja2 is enough.
