@@ -7,6 +7,7 @@ into clean errors — a timeout into 504, anything else into a clear message.
 The API key rides in the Authorization header and is never logged.
 """
 
+import json
 import logging
 import os
 
@@ -32,6 +33,24 @@ SYSTEM_PROMPT = (
     "'Watch out for', and phase the time estimate. Keep the whole response "
     "under 300 words. Be direct."
 )
+
+SECTIONS_SYSTEM_PROMPT = (
+    "You are a study coach helping a student get started on one assignment. "
+    "Respond with a single JSON object and nothing else. It must have exactly "
+    "these four string keys, in this order:\n"
+    '  "whats_being_asked": restate the task in plain language, grounded only in '
+    "the assignment details given.\n"
+    '  "where_to_research": concrete research directions - kinds of sources, '
+    "search terms, and library databases to try. Never invent specific "
+    "citations, source titles, authors, or URLs.\n"
+    '  "outline": a skeleton of the finished work - the sections or steps it '
+    "should contain.\n"
+    '  "ideas": possible approaches, thesis angles, or directions to explore.\n'
+    "Within each value, put each point on its own line starting with '- '. Keep "
+    "the whole response under 500 words. Be direct and specific."
+)
+
+SECTION_KEYS = ("whats_being_asked", "where_to_research", "outline", "ideas")
 
 # (assignment key, label) in the order they appear in the context block.
 _CONTEXT_FIELDS = [
@@ -65,17 +84,13 @@ def build_messages(assignment):
     ]
 
 
-def generate_breakdown(assignment, client, api_key):
-    """Call Groq and return the markdown breakdown, or raise a clean AIError."""
+def _request_completion(client, api_key, payload):
+    """POST to Groq, map failures to clean errors, return the message content."""
     try:
         response = client.post(
             f"{GROQ_BASE_URL}/chat/completions",
             headers={"Authorization": f"Bearer {api_key}"},
-            json={
-                "model": GROQ_MODEL,
-                "temperature": TEMPERATURE,
-                "messages": build_messages(assignment),
-            },
+            json=payload,
         )
         response.raise_for_status()
     except httpx.TimeoutException as exc:
@@ -86,6 +101,47 @@ def generate_breakdown(assignment, client, api_key):
         raise AIError("The AI breakdown could not be generated.") from exc
 
     return response.json()["choices"][0]["message"]["content"]
+
+
+def generate_breakdown(assignment, client, api_key):
+    """Call Groq and return the markdown breakdown, or raise a clean AIError."""
+    return _request_completion(client, api_key, {
+        "model": GROQ_MODEL,
+        "temperature": TEMPERATURE,
+        "messages": build_messages(assignment),
+    })
+
+
+def build_section_messages(assignment):
+    """System prompt asking for JSON sections, plus the same context block."""
+    lines = []
+    for key, label in _CONTEXT_FIELDS:
+        value = assignment.get(key)
+        if value is None or value == "":
+            continue
+        lines.append(f"{label}: {value}")
+    return [
+        {"role": "system", "content": SECTIONS_SYSTEM_PROMPT},
+        {"role": "user", "content": "\n".join(lines)},
+    ]
+
+
+def generate_sections(assignment, client, api_key):
+    """Call Groq in JSON mode and return the four sections, or raise AIError."""
+    content = _request_completion(client, api_key, {
+        "model": GROQ_MODEL,
+        "temperature": TEMPERATURE,
+        "response_format": {"type": "json_object"},
+        "messages": build_section_messages(assignment),
+    })
+    try:
+        data = json.loads(content)
+        if not isinstance(data, dict):
+            raise ValueError("expected a JSON object")
+    except (ValueError, TypeError) as exc:
+        logger.warning("AI breakdown returned invalid JSON")
+        raise AIError("The AI breakdown could not be generated.") from exc
+    return {key: str(data.get(key, "")).strip() for key in SECTION_KEYS}
 
 
 class BreakdownRequest(BaseModel):

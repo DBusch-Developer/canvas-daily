@@ -28,7 +28,7 @@ Two APIs: **Canvas** (third-party assignment data) and **Groq / Llama 3.3 70B** 
 - **Detail pages read from storage, not live Canvas.** No live Canvas call on click.
 - **AI breakdown is on-demand, not pre-fetched.** It fires when the user presses the button, not on the daily run.
 - **Groq key comes from `GROQ_API_KEY` in the environment.** Never hardcoded, never logged, never in a commit.
-- **The AI breakdown keeps its four-section format** — What's being asked / Step-by-step plan / Watch out for / Time estimate — capped under 300 words, temperature 0.5.
+- **The AI breakdown keeps its four-section format** — What's being asked / Where to start researching / Outline of the work / Ideas & angles — returned as a JSON object, rendered as cards in a modal, capped under 500 words, temperature 0.5. The research section must never invent citations, source titles, or URLs.
 - **Handle AI failures cleanly.** Timeout → clear "took too long" message; any other error → clear message. Never a broken page.
 - **Never commit `.env`, tokens, or secrets.**
 

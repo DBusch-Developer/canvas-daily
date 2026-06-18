@@ -193,6 +193,18 @@ Green — after adding the `completed` bucket, the dashboard disclosure, and the
 
 ![Completed-section tests passing — eight green passes](docs/test-evidence/completed-green.png)
 
+**Layer 12 — redesigned AI breakdown: structured sections + modal cards**
+
+The "Break this down with AI" trigger moves to the top of the detail page beside "Open in Canvas". Groq is now asked for a **JSON object** with four sections — **What's being asked / Where to start researching / Outline of the work / Ideas & angles** — capped under 500 words, with the research section forbidden from inventing citations or URLs. The result renders as **styled cards in a modal** (no more raw markdown scrolled to the bottom), with a **copy-to-clipboard** button for pasting into a document. Bad JSON from the model degrades to the same clean error path as a timeout. Model text lands only in auto-escaped Jinja nodes, so no raw HTML reaches the page.
+
+Red — `build_section_messages`, `generate_sections`, `SECTION_KEYS`, and the card/dialog markup don't exist yet, so the layer can't even import:
+
+![Breakdown redesign tests failing — feature missing](docs/test-evidence/breakdown-red.png)
+
+Green — after adding JSON-mode generation, parsing into four sections, and the card/dialog rendering:
+
+![Breakdown redesign tests passing](docs/test-evidence/breakdown-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

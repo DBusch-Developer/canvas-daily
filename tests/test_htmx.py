@@ -7,6 +7,7 @@ site header, no full HTML document — while a normal POST still gets the full
 page exactly as before. Groq is mocked; the AI logic itself is untouched.
 """
 
+import json
 from datetime import datetime
 
 import httpx
@@ -17,10 +18,15 @@ from sqlmodel import Session, SQLModel, create_engine, select
 from app.models import Assignment, Connection, User
 from app.web import create_app, get_groq_client, get_session
 
-MARKDOWN = (
-    "## What's being asked\nMeasure stuff.\n"
-    "## Step-by-step plan\nDo it.\n## Watch out for\nUnits.\n## Time estimate\n1 hour"
-)
+# The breakdown route now asks Groq for JSON sections (Layer 12). This layer only
+# pins the HX-Request fragment-vs-full-page behavior, so it just needs a valid
+# section payload whose text we can spot in the rendered cards.
+SECTIONS = json.dumps({
+    "whats_being_asked": "Measure stuff.",
+    "where_to_research": "- Lab manual",
+    "outline": "- Method\n- Results",
+    "ideas": "- Compare runs",
+})
 
 
 @pytest.fixture
@@ -88,7 +94,7 @@ def is_full_page(text):
 def test_htmx_success_returns_only_the_fragment(client, app, engine):
     assignment_id = seed_logged_in_assignment(client, engine)
     mock_groq(app, lambda r: httpx.Response(
-        200, json={"choices": [{"message": {"content": MARKDOWN}}]}))
+        200, json={"choices": [{"message": {"content": SECTIONS}}]}))
 
     resp = client.post(f"/assignments/{assignment_id}/breakdown",
                        headers={"HX-Request": "true"})
@@ -128,7 +134,7 @@ def test_htmx_error_returns_message_fragment(client, app, engine):
 def test_normal_post_still_returns_full_page(client, app, engine):
     assignment_id = seed_logged_in_assignment(client, engine)
     mock_groq(app, lambda r: httpx.Response(
-        200, json={"choices": [{"message": {"content": MARKDOWN}}]}))
+        200, json={"choices": [{"message": {"content": SECTIONS}}]}))
 
     resp = client.post(f"/assignments/{assignment_id}/breakdown")
 

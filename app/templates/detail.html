@@ -17,9 +17,16 @@
       <span class="course-pill course-pill--lg">{{ a.connection.label }}</span>
       <span class="badge badge--{{ tone }}">{{ status }}</span>
     </div>
-    {% if a.html_url %}
-      <a class="btn btn--primary" href="{{ a.html_url }}" target="_blank" rel="noopener">Open in Canvas ↗</a>
-    {% endif %}
+    <form class="brief__actions" method="post" action="/assignments/{{ a.id }}/breakdown">
+      {% if a.html_url %}
+        <a class="btn btn--primary" href="{{ a.html_url }}" target="_blank" rel="noopener">Open in Canvas ↗</a>
+      {% endif %}
+      <button class="btn btn--accent" type="submit"
+              id="breakdown-trigger"
+              hx-post="/assignments/{{ a.id }}/breakdown"
+              hx-target="#breakdown-body"
+              hx-swap="innerHTML">✦ Break this down with AI</button>
+    </form>
   </section>
 
   <ul class="metagrid">
@@ -72,19 +79,16 @@
     {% endif %}
   </section>
 
-  {# HTMX swaps the result into #breakdown-result below. Without JS the same form
-     still POSTs normally and the route returns the full breakdown page. #}
-  <form class="breakdown-cta" method="post" action="/assignments/{{ a.id }}/breakdown"
-        hx-post="/assignments/{{ a.id }}/breakdown"
-        hx-target="#breakdown-result"
-        hx-swap="innerHTML"
-        hx-disabled-elt="find button">
-    <button class="btn btn--accent" type="submit">✦ Break this down with AI</button>
-    <span class="breakdown-cta__hint">Get a step-by-step study plan, watch-outs, and a time estimate.</span>
-    <span class="breakdown-cta__loading htmx-indicator" aria-live="polite">
-      <span class="spinner" aria-hidden="true"></span> Thinking it through…
-    </span>
-  </form>
-
-  <div id="breakdown-result" class="breakdown-result"></div>
+  {# HTMX swaps the result into the dialog body. Without JS the trigger form at the
+     top still POSTs normally and the route returns the full breakdown page. #}
+  <dialog id="breakdown-dialog" class="modal">
+    <div class="modal__head">
+      <p class="modal__eyebrow">✦ AI study breakdown</p>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost btn--sm" data-copy>Copy</button>
+        <button type="button" class="modal__close" data-close aria-label="Close">✕</button>
+      </div>
+    </div>
+    <div id="breakdown-body" class="modal__body"></div>
+  </dialog>
 {% endblock %}

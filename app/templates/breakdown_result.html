@@ -1,11 +1,28 @@
-{# The breakdown result only: the success markdown, or an error/timeout notice.
-   Shared by the full breakdown.html page and the HTMX in-place swap, so both
-   render identical markup. #}
+{# The breakdown result only: four section cards, or an error/timeout notice.
+   Shared by the full breakdown.html page and the HTMX in-place swap into the
+   dialog, so both render identical markup. Model text lands only in
+   auto-escaped Jinja text nodes - no raw HTML reaches the page. #}
 {% if error %}
   <p class="notice">{{ error }}</p>
 {% else %}
-  <section class="panel">
-    {# Markdown text shown as-is; rendered in a monospace block for readability. #}
-    <pre class="breakdown">{{ markdown }}</pre>
-  </section>
+  <div class="breakdown-cards" data-breakdown>
+    {% for key, title in [
+        ('whats_being_asked', "What's being asked"),
+        ('where_to_research', 'Where to start researching'),
+        ('outline', 'Outline of the work'),
+        ('ideas', 'Ideas & angles')] %}
+      {% set value = sections[key] %}
+      {% if value %}
+        <section class="section-card">
+          <h3 class="section-card__title">{{ title }}</h3>
+          <div class="section-card__body">
+            {% for raw in value.split('\n') %}
+              {% set line = raw.strip().lstrip('-').strip() %}
+              {% if line %}<p>{{ line }}</p>{% endif %}
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+    {% endfor %}
+  </div>
 {% endif %}

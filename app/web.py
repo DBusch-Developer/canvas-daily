@@ -18,7 +18,7 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 from starlette.middleware.sessions import SessionMiddleware
 
-from app.ai import AIError, AITimeoutError, generate_breakdown
+from app.ai import AIError, AITimeoutError, generate_sections
 from app.auth import hash_password, verify_password
 from app.db import make_engine
 from app.models import Assignment, Connection, User
@@ -269,7 +269,7 @@ def create_app():
             "course": assignment.connection.label,
         }
         try:
-            markdown = generate_breakdown(context, client, os.environ.get("GROQ_API_KEY", ""))
+            sections = generate_sections(context, client, os.environ.get("GROQ_API_KEY", ""))
         except AITimeoutError:
             return TEMPLATES.TemplateResponse(
                 request, template,
@@ -283,6 +283,6 @@ def create_app():
                 status_code=502,
             )
         return TEMPLATES.TemplateResponse(
-            request, template, {"a": assignment, "markdown": markdown})
+            request, template, {"a": assignment, "sections": sections})
 
     return app

@@ -155,15 +155,22 @@ def test_detail_page_reads_storage_no_live_canvas(client, engine, monkeypatch):
     assert "Measure and write up." in resp.text
 
 
-def test_breakdown_button_renders_markdown(client, app, engine):
+def test_breakdown_button_renders_sections(client, app, engine):
+    import json
+
     import httpx
     signup(client, email="ai@x.com")
     assignment_id = seed_assignment(engine, "ai@x.com")
 
-    markdown = "## What's being asked\nMeasure stuff."
+    sections = json.dumps({
+        "whats_being_asked": "Measure stuff.",
+        "where_to_research": "- Lab manual",
+        "outline": "- Method",
+        "ideas": "- Compare",
+    })
 
     def handler(request):
-        return httpx.Response(200, json={"choices": [{"message": {"content": markdown}}]})
+        return httpx.Response(200, json={"choices": [{"message": {"content": sections}}]})
 
     app.dependency_overrides[get_groq_client] = lambda: httpx.Client(
         transport=httpx.MockTransport(handler)
@@ -171,8 +178,8 @@ def test_breakdown_button_renders_markdown(client, app, engine):
 
     resp = client.post(f"/assignments/{assignment_id}/breakdown")
     assert resp.status_code == 200
-    # The apostrophe is HTML-escaped by the template, so match unambiguous text.
-    assert "being asked" in resp.text
+    # Section title (apostrophe HTML-escaped) and a section value both render.
+    assert "What" in resp.text and "being asked" in resp.text
     assert "Measure stuff." in resp.text
 
 
