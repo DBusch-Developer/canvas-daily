@@ -91,4 +91,27 @@
       </section>
     {% endfor %}
   </div>
+
+  {% if buckets.completed %}
+    <details class="board__completed">
+      <summary>Completed ({{ buckets.completed | length }}) — tap to reflect</summary>
+      <ul class="cards">
+        {% for a in buckets.completed %}
+          <li class="card">
+            <div class="card__top">
+              <span class="badge badge--done">{{ 'Excused' if a.excused else ('Graded' if a.workflow_state == 'graded' else 'Complete') }}</span>
+              <span class="course-pill">{{ a.connection.label }}</span>
+            </div>
+            <h3 class="card__title">{{ a.name }}</h3>
+            <div class="card__foot">
+              <span class="due">due {{ a.due_at }}</span>
+              {% if a.html_url %}
+                <a class="card__open" href="{{ a.html_url }}" target="_blank" rel="noopener">Open in Canvas ↗</a>
+              {% endif %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </details>
+  {% endif %}
 {% endblock %}

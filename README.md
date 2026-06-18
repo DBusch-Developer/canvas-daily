@@ -181,6 +181,18 @@ Green — after writing the background sync, the `sync_status` column, the setup
 
 ![Setup-flow tests passing — nine green passes](docs/test-evidence/setup-green.png)
 
+**Layer 11 — completed work in its own section (Neon test branch + TestClient)**
+
+Done work no longer clutters the urgency columns. `report_for_user` routes anything **submitted, graded, or excused** into its own `completed` bucket (a **missing** past-due item is *not* done and stays in Past due). The dashboard shows completed work in a collapsible **`<details>` "Completed (N)"** section — read-only, **no detail page and no AI breakdown** — and the daily email drops completed work (and stops counting it in the subject total). Eight behaviors: submitted/graded/excused → `completed`; missing stays `past_due`; not-done due-today stays put; the completed item is **separated from the board and carries no `/assignments/{id}` link**; the disclosure shows the right count; no disclosure when nothing's done; and the email excludes completed from body and total.
+
+Red — the `completed` bucket, the dashboard disclosure, and the email fix don't exist yet, so the bucketing assertions hit `KeyError: 'completed'`:
+
+![Completed-section tests failing — feature missing](docs/test-evidence/completed-red.png)
+
+Green — after adding the `completed` bucket, the dashboard disclosure, and the email total fix:
+
+![Completed-section tests passing — eight green passes](docs/test-evidence/completed-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

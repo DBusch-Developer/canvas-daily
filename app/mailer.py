@@ -20,7 +20,7 @@ _SECTIONS = [("past_due", "Past due"), ("due_today", "Due today"), ("upcoming", 
 def build_report_email(session, user, now):
     """Return (subject, body) for a user's daily report."""
     buckets = report_for_user(session, user.id, now)
-    total = sum(len(items) for items in buckets.values())
+    total = sum(len(buckets[key]) for key, _ in _SECTIONS)
 
     lines = ["Your Canvas Daily report", ""]
     for key, title in _SECTIONS:
