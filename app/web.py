@@ -20,6 +20,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.ai import AIError, AITimeoutError, generate_bullets
 from app.auth import hash_password, verify_password
+from app.dates import group_by_week
 from app.db import make_engine
 from app.models import Assignment, Connection, User
 from app.reports import report_for_user
@@ -162,7 +163,10 @@ def create_app():
         if user is None:
             return RedirectResponse("/login", status_code=303)
         buckets = report_for_user(session, user.id, _now())
-        return TEMPLATES.TemplateResponse(request, "report.html", {"buckets": buckets})
+        upcoming_weeks = group_by_week(buckets["upcoming"], _now())
+        return TEMPLATES.TemplateResponse(
+            request, "report.html",
+            {"buckets": buckets, "upcoming_weeks": upcoming_weeks})
 
     @app.get("/connections")
     def connections_list(request: Request, session: Session = Depends(get_session)):

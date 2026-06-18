@@ -352,6 +352,23 @@ a:hover { text-decoration: underline; }
   color: var(--muted);
 }
 
+.weekgroup { border-top: 1px solid var(--border); }
+.weekgroup:first-of-type { border-top: 0; }
+.weekgroup__summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem;
+  padding: .6rem 0;
+  font: 600 .9rem/1 var(--sans);
+  color: var(--navy);
+}
+.weekgroup__summary::-webkit-details-marker { display: none; }
+.weekgroup__count { color: var(--muted); font-size: .82rem; }
+.weekgroup .cards { margin: 0 0 .6rem; }
+
 /* ---- Empty states ---------------------------------------------------- */
 
 .empty {

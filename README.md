@@ -265,6 +265,18 @@ Green — after adding the properties and updating the pill and card:
 
 ![Class-label tests passing](docs/test-evidence/classlabel-green.png)
 
+**Layer 18 — group the Upcoming column by week**
+
+The Upcoming column could hold many weeks of assignments, making the board tall and pushing the Completed section far down. `group_by_week` buckets upcoming work into Monday-start calendar weeks ("This week" / "Next week" / "Week of Jun 30"), skipping empty weeks, and the dashboard renders each week as a collapsible disclosure (first open) — so the column stays short and Completed is reachable.
+
+Red — `group_by_week` and the weekly markup don't exist yet:
+
+![Upcoming-by-week tests failing](docs/test-evidence/upcomingweeks-red.png)
+
+Green — after adding the grouping function and the weekly disclosures:
+
+![Upcoming-by-week tests passing](docs/test-evidence/upcomingweeks-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

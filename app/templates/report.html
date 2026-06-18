@@ -1,6 +1,30 @@
 {% extends "base.html" %}
 {% block title %}Dashboard · Canvas Daily{% endblock %}
 {% block body %}
+{% macro card(a, mod, title) %}
+  {% set tone = 'danger' if (a.missing or a.late)
+                else ('done' if (a.workflow_state == 'graded' or a.submitted_at) else mod) %}
+  {% set status = 'Missing' if a.missing
+                  else ('Late' if a.late
+                  else ('Complete' if (a.workflow_state == 'graded' or a.submitted_at) else title)) %}
+  <li class="card">
+    <div class="card__top">
+      <span class="badge badge--{{ tone }}">{{ status }}</span>
+      {% if a.is_quiz %}<span class="tag tag--quiz">Quiz</span>{% endif %}
+      <span class="course-pill">{{ a.connection.label }}</span>
+    </div>
+    <h3 class="card__title">
+      <a href="/assignments/{{ a.id }}">{{ a.name }}</a>
+    </h3>
+    {% if a.course_code %}<p class="card__class">{{ a.course_trimmed }}</p>{% endif %}
+    <div class="card__foot">
+      <span class="due">due {{ a.due_at }}</span>
+      {% if a.html_url %}
+        <a class="card__open" href="{{ a.html_url }}" target="_blank" rel="noopener">Open ↗</a>
+      {% endif %}
+    </div>
+  </li>
+{% endmacro %}
   {% set all = buckets.past_due + buckets.due_today + buckets.upcoming %}
   {% set total = all | length %}
   {% set courses = all | map(attribute='connection.label') | unique | list %}
@@ -53,40 +77,34 @@
           <span class="column__count">{{ buckets[key] | length }}</span>
         </div>
 
-        {% if buckets[key] %}
-          <ul class="cards">
-            {% for a in buckets[key] %}
-              {% set tone = 'danger' if (a.missing or a.late)
-                            else ('done' if (a.workflow_state == 'graded' or a.submitted_at) else mod) %}
-              {% set status = 'Missing' if a.missing
-                              else ('Late' if a.late
-                              else ('Complete' if (a.workflow_state == 'graded' or a.submitted_at) else title)) %}
-              <li class="card">
-                <div class="card__top">
-                  <span class="badge badge--{{ tone }}">{{ status }}</span>
-                  {% if a.is_quiz %}<span class="tag tag--quiz">Quiz</span>{% endif %}
-                  <span class="course-pill">{{ a.connection.label }}</span>
-                </div>
-                <h3 class="card__title">
-                  <a href="/assignments/{{ a.id }}">{{ a.name }}</a>
-                </h3>
-                {% if a.course_code %}<p class="card__class">{{ a.course_trimmed }}</p>{% endif %}
-                <div class="card__foot">
-                  <span class="due">due {{ a.due_at }}</span>
-                  {% if a.html_url %}
-                    <a class="card__open" href="{{ a.html_url }}" target="_blank" rel="noopener">Open ↗</a>
-                  {% endif %}
-                </div>
-              </li>
+        {% if key == 'upcoming' %}
+          {% if upcoming_weeks %}
+            {% for week in upcoming_weeks %}
+              <details class="weekgroup"{% if loop.first %} open{% endif %}>
+                <summary class="weekgroup__summary">
+                  {{ week.label }} <span class="weekgroup__count">{{ week.assignments | length }}</span>
+                </summary>
+                <ul class="cards">
+                  {% for a in week.assignments %}{{ card(a, mod, title) }}{% endfor %}
+                </ul>
+              </details>
             {% endfor %}
+          {% else %}
+            <div class="empty">
+              <p class="empty__title">All clear</p>
+              <p class="empty__sub">No upcoming work on the radar yet.</p>
+            </div>
+          {% endif %}
+        {% elif buckets[key] %}
+          <ul class="cards">
+            {% for a in buckets[key] %}{{ card(a, mod, title) }}{% endfor %}
           </ul>
         {% else %}
           <div class="empty">
             <p class="empty__title">All clear</p>
             <p class="empty__sub">
               {% if mod == 'past' %}Nothing overdue. Nice work staying ahead.
-              {% elif mod == 'today' %}Nothing due today.
-              {% else %}No upcoming work on the radar yet.{% endif %}
+              {% else %}Nothing due today.{% endif %}
             </p>
           </div>
         {% endif %}
