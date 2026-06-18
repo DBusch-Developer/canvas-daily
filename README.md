@@ -169,18 +169,6 @@ Green — after writing the `get_canvas_client` dependency, auto-sync on add, th
 
 ![Auto-sync tests passing — seven green passes](docs/test-evidence/autosync-green.png)
 
-**Layer 10 — background sync + account setup page (Canvas mocked, Neon test branch)**
-
-Foundation for the setup flow that guides a new user through connecting their Canvas accounts and monitoring sync status. One behavior at start: a new connection defaults its sync_status to `pending`.
-
-Red — the `sync_status` column doesn't exist yet:
-
-![Setup flow tests failing — one red failure](docs/test-evidence/setup-red.png)
-
-Green — after adding the `sync_status` column and migration:
-
-![Setup flow tests passing — one green pass](docs/test-evidence/setup-green.png)
-
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables
