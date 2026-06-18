@@ -16,17 +16,23 @@
     <div class="brief__tags">
       <span class="course-pill course-pill--lg">{{ a.connection.label }}</span>
       <span class="badge badge--{{ tone }}">{{ status }}</span>
+      {% if a.is_quiz %}<span class="tag tag--quiz">Quiz</span>{% endif %}
     </div>
-    <form class="brief__actions" method="post" action="/assignments/{{ a.id }}/breakdown">
+    <div class="brief__actions">
       {% if a.html_url %}
         <a class="btn btn--primary" href="{{ a.html_url }}" target="_blank" rel="noopener">Open in Canvas ↗</a>
       {% endif %}
-      <button class="btn btn--accent" type="submit"
-              id="breakdown-trigger"
-              hx-post="/assignments/{{ a.id }}/breakdown"
-              hx-target="#breakdown-body"
-              hx-swap="innerHTML">✦ Break this down with AI</button>
-    </form>
+      {# No AI breakdown for quizzes — there's nothing to break down. #}
+      {% if not a.is_quiz %}
+        <form method="post" action="/assignments/{{ a.id }}/breakdown">
+          <button class="btn btn--accent" type="submit"
+                  id="breakdown-trigger"
+                  hx-post="/assignments/{{ a.id }}/breakdown"
+                  hx-target="#breakdown-body"
+                  hx-swap="innerHTML">✦ Break this down with AI</button>
+        </form>
+      {% endif %}
+    </div>
   </section>
 
   <ul class="metagrid">
@@ -71,6 +77,11 @@
     {% if a.description and a.description | trim %}
       {# Description was sanitized on fetch (nh3), so it is safe to render. #}
       <div class="prose">{{ a.description | safe }}</div>
+    {% elif a.is_quiz %}
+      <div class="empty">
+        <p class="empty__title">This is a quiz</p>
+        <p class="empty__sub">The questions aren't shown here — open it in Canvas to take it.</p>
+      </div>
     {% else %}
       <div class="empty">
         <p class="empty__title">No instructions provided</p>
@@ -80,7 +91,9 @@
   </section>
 
   {# HTMX swaps the result into the dialog body. Without JS the trigger form at the
-     top still POSTs normally and the route returns the full breakdown page. #}
+     top still POSTs normally and the route returns the full breakdown page.
+     Quizzes have no breakdown, so the dialog is omitted for them. #}
+  {% if not a.is_quiz %}
   <dialog id="breakdown-dialog" class="modal">
     <div class="modal__head">
       <p class="modal__eyebrow">✦ AI study breakdown</p>
@@ -91,4 +104,5 @@
     </div>
     <div id="breakdown-body" class="modal__body"></div>
   </dialog>
+  {% endif %}
 {% endblock %}

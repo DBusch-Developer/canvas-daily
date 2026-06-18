@@ -217,6 +217,18 @@ Green — after adding the array-based prompt, array parsing, and string-to-bull
 
 ![Bullet-array breakdown tests passing](docs/test-evidence/breakdownbullets-green.png)
 
+**Layer 14 — quiz indicator**
+
+Some Canvas assignments are quizzes, and Canvas usually leaves the assignment description blank (the questions live on a separate quiz object), so quizzes showed an empty Instructions panel with nothing to identify them. `Assignment.is_quiz` reads the stored `online_quiz` submission type, and every surface labels quizzes from it: a **Quiz** pill and a quiz-specific message on the detail page, a **Quiz** tag on dashboard cards, and a `(Quiz)` marker in the daily email. There's **no AI breakdown for quizzes** — the button and modal are hidden, and the breakdown route refuses a quiz outright (defense in depth, so a direct POST can't run one either).
+
+Red — `Assignment.is_quiz` and the quiz markup/markers don't exist yet:
+
+![Quiz indicator tests failing — feature missing](docs/test-evidence/quiz-red.png)
+
+Green — after adding the property and the detail/dashboard/email labels:
+
+![Quiz indicator tests passing](docs/test-evidence/quiz-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

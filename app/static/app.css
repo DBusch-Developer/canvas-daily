@@ -334,6 +334,18 @@ a:hover { text-decoration: underline; }
 }
 .course-pill--lg { margin-left: 0; font-size: .85rem; padding: .42rem .8rem; }
 
+.tag {
+  font: 600 .72rem/1 var(--sans);
+  border-radius: 999px;
+  padding: .3rem .55rem;
+  letter-spacing: .02em;
+}
+.tag--quiz {
+  color: var(--coral);
+  background: rgba(239, 107, 52, .12);
+  border: 1px solid rgba(239, 107, 52, .35);
+}
+
 /* ---- Empty states ---------------------------------------------------- */
 
 .empty {

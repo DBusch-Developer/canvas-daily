@@ -261,6 +261,13 @@ def create_app():
             if request.headers.get("HX-Request")
             else "breakdown.html"
         )
+        # No AI breakdown for quizzes — refuse before any Groq call.
+        if assignment.is_quiz:
+            return TEMPLATES.TemplateResponse(
+                request, template,
+                {"a": assignment, "error": "AI breakdown isn't available for quizzes."},
+                status_code=400,
+            )
         context = {
             "title": assignment.name,
             "description": assignment.description,

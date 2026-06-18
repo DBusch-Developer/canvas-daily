@@ -64,6 +64,7 @@
               <li class="card">
                 <div class="card__top">
                   <span class="badge badge--{{ tone }}">{{ status }}</span>
+                  {% if a.is_quiz %}<span class="tag tag--quiz">Quiz</span>{% endif %}
                   <span class="course-pill">{{ a.connection.label }}</span>
                 </div>
                 <h3 class="card__title">
@@ -100,6 +101,7 @@
           <li class="card">
             <div class="card__top">
               <span class="badge badge--done">{{ 'Excused' if a.excused else ('Graded' if a.workflow_state == 'graded' else 'Complete') }}</span>
+              {% if a.is_quiz %}<span class="tag tag--quiz">Quiz</span>{% endif %}
               <span class="course-pill">{{ a.connection.label }}</span>
             </div>
             <h3 class="card__title">{{ a.name }}</h3>

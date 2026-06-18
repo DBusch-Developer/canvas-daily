@@ -85,3 +85,8 @@ class Assignment(SQLModel, table=True):
     fetched_at: datetime = Field(default_factory=_utcnow)
 
     connection: Connection | None = Relationship(back_populates="assignments")
+
+    @property
+    def is_quiz(self) -> bool:
+        """True when Canvas marks this assignment as a quiz."""
+        return "online_quiz" in self.submission_types
