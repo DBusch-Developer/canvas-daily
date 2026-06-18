@@ -55,6 +55,7 @@ class Connection(SQLModel, table=True):
     access_token: str = Field(sa_column=Column(EncryptedToken, nullable=False))
     created_at: datetime = Field(default_factory=_utcnow)
     last_synced_at: datetime | None = None
+    sync_status: str = Field(default="pending")  # pending | ok | error
 
     user: User | None = Relationship(back_populates="connections")
     assignments: list["Assignment"] = Relationship(
