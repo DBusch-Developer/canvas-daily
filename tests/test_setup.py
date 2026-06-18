@@ -46,7 +46,55 @@ def a_user_and_connection(engine, email="d@x.com", token="tok"):
         return conn.id
 
 
+def client_for(handler):
+    return httpx.Client(transport=httpx.MockTransport(handler))
+
+
+def canvas_ok(request):
+    path = request.url.path
+    if path.endswith("/courses"):
+        return httpx.Response(200, json=[{"id": 10, "name": "Bio"}])
+    if path.endswith("/courses/10/assignments"):
+        return httpx.Response(200, json=[{
+            "id": 1, "name": "Lab report", "due_at": "2026-06-20T23:59:00Z",
+            "points_possible": 25, "submission_types": ["online_upload"],
+            "html_url": f"{BASE}/a/1", "description": "<p>Do it.</p>",
+        }])
+    return httpx.Response(200, json=[])
+
+
 def test_new_connection_defaults_to_pending(engine):
     conn_id = a_user_and_connection(engine)
     with Session(engine) as s:
         assert s.get(Connection, conn_id).sync_status == "pending"
+
+
+def test_background_sync_stores_and_marks_ok(engine):
+    from app.web import run_connection_sync
+    conn_id = a_user_and_connection(engine)
+
+    run_connection_sync(engine, conn_id, lambda: client_for(canvas_ok))
+
+    with Session(engine) as s:
+        conn = s.get(Connection, conn_id)
+        assert conn.sync_status == "ok"
+        assert conn.last_synced_at is not None
+        stored = s.exec(select(Assignment).where(Assignment.connection_id == conn_id)).all()
+        assert len(stored) == 1
+
+
+def test_background_sync_keeps_connection_and_marks_error(engine, caplog):
+    from app.web import run_connection_sync
+    conn_id = a_user_and_connection(engine, token="secret-token")
+
+    def boom(request):
+        return httpx.Response(401, json={"errors": ["bad token"]})
+
+    with caplog.at_level(logging.WARNING):
+        run_connection_sync(engine, conn_id, lambda: client_for(boom))
+
+    with Session(engine) as s:
+        conn = s.get(Connection, conn_id)
+        assert conn is not None
+        assert conn.sync_status == "error"
+    assert "secret-token" not in caplog.text

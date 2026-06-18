@@ -77,6 +77,26 @@ def _owned_assignment_or_404(session, assignment_id, user):
     return assignment
 
 
+def run_connection_sync(engine, connection_id, client_factory):
+    """Pull one connection's assignments in the background and record the
+    outcome. Opens its own session (the request's is gone). Never logs the token."""
+    with Session(engine) as session:
+        connection = session.get(Connection, connection_id)
+        if connection is None:
+            return
+        client = client_factory()
+        try:
+            sync_connection(session, connection, client)
+            connection.sync_status = "ok"
+        except Exception:
+            connection.sync_status = "error"
+            logger.warning("background sync failed for connection %s", connection_id)
+        finally:
+            client.close()
+        session.add(connection)
+        session.commit()
+
+
 def create_app():
     app = FastAPI()
     app.add_middleware(
