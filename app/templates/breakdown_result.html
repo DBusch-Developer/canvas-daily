@@ -11,15 +11,12 @@
         ('where_to_research', 'Where to start researching'),
         ('outline', 'Outline of the work'),
         ('ideas', 'Ideas & angles')] %}
-      {% set value = sections[key] %}
-      {% if value %}
+      {% set items = sections[key] %}
+      {% if items %}
         <section class="section-card">
           <h3 class="section-card__title">{{ title }}</h3>
           <div class="section-card__body">
-            {% for raw in value.split('\n') %}
-              {% set line = raw.strip().lstrip('-').strip() %}
-              {% if line %}<p>{{ line }}</p>{% endif %}
-            {% endfor %}
+            {% for item in items %}<p>{{ item }}</p>{% endfor %}
           </div>
         </section>
       {% endif %}

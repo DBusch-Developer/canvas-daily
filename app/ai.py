@@ -52,6 +52,23 @@ SECTIONS_SYSTEM_PROMPT = (
 
 SECTION_KEYS = ("whats_being_asked", "where_to_research", "outline", "ideas")
 
+# Layer 13: ask for arrays of strings, not multi-line bulleted strings. Groq's
+# strict json_object validator rejects the multi-line form on longer assignments.
+SECTIONS_BULLETS_PROMPT = (
+    "You are a study coach helping a student get started on one assignment. "
+    "Respond with a single JSON object and nothing else. It must have exactly "
+    "these four keys, and each value must be a JSON array of short plain-text "
+    "strings - one idea per string, no markdown, no leading dashes:\n"
+    '  "whats_being_asked": restate the task in plain language, grounded only in '
+    "the assignment details given.\n"
+    '  "where_to_research": concrete research directions - kinds of sources, '
+    "search terms, and library databases to try. Never invent specific "
+    "citations, source titles, authors, or URLs.\n"
+    '  "outline": the sections or steps the finished work should contain.\n'
+    '  "ideas": possible approaches, thesis angles, or directions to explore.\n'
+    "Keep the whole response under 500 words. Be direct and specific."
+)
+
 # (assignment key, label) in the order they appear in the context block.
 _CONTEXT_FIELDS = [
     ("title", "Title"),
@@ -142,6 +159,58 @@ def generate_sections(assignment, client, api_key):
         logger.warning("AI breakdown returned invalid JSON")
         raise AIError("The AI breakdown could not be generated.") from exc
     return {key: str(data.get(key, "")).strip() for key in SECTION_KEYS}
+
+
+def build_bullet_messages(assignment):
+    """System prompt asking for JSON arrays, plus the same context block."""
+    lines = []
+    for key, label in _CONTEXT_FIELDS:
+        value = assignment.get(key)
+        if value is None or value == "":
+            continue
+        lines.append(f"{label}: {value}")
+    return [
+        {"role": "system", "content": SECTIONS_BULLETS_PROMPT},
+        {"role": "user", "content": "\n".join(lines)},
+    ]
+
+
+def _as_bullets(value):
+    """Coerce a section value into a clean list of bullet strings.
+
+    The model is asked for a JSON array of strings, but be defensive: a stray
+    multi-line string is split on its lines (with any leading dash trimmed), and
+    blanks are dropped. Anything else becomes an empty list.
+    """
+    if isinstance(value, list):
+        items = [str(item).strip() for item in value]
+    elif isinstance(value, str):
+        items = [line.strip().lstrip("-").strip() for line in value.splitlines()]
+    else:
+        items = []
+    return [item for item in items if item]
+
+
+def generate_bullets(assignment, client, api_key):
+    """Call Groq in JSON mode and return each section as a list of bullets.
+
+    Asking for JSON arrays (rather than multi-line bulleted strings) keeps Groq's
+    strict json_object validator from rejecting the response with a 400.
+    """
+    content = _request_completion(client, api_key, {
+        "model": GROQ_MODEL,
+        "temperature": TEMPERATURE,
+        "response_format": {"type": "json_object"},
+        "messages": build_bullet_messages(assignment),
+    })
+    try:
+        data = json.loads(content)
+        if not isinstance(data, dict):
+            raise ValueError("expected a JSON object")
+    except (ValueError, TypeError) as exc:
+        logger.warning("AI breakdown returned invalid JSON")
+        raise AIError("The AI breakdown could not be generated.") from exc
+    return {key: _as_bullets(data.get(key)) for key in SECTION_KEYS}
 
 
 class BreakdownRequest(BaseModel):

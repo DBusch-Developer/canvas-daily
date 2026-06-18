@@ -205,6 +205,18 @@ Green — after adding JSON-mode generation, parsing into four sections, and the
 
 ![Breakdown redesign tests passing](docs/test-evidence/breakdown-green.png)
 
+**Layer 13 — AI breakdown sections as JSON arrays (bullets)**
+
+Layer 12 asked Groq for a JSON object whose values were multi-line bulleted *strings*. On real, longer assignments the model emitted bare unquoted dash-lines that aren't valid JSON, so Groq's strict `json_object` validator returned **400** and the page showed a **502**. This layer adds `generate_bullets`, which asks Groq for each section as a JSON **array of strings** — a shape the model reliably encodes as valid JSON — and returns each section as a clean list of bullets. A stray string value is coerced into bullets instead of crashing, and the breakdown route renders one card bullet per array item.
+
+Red — `build_bullet_messages` and `generate_bullets` don't exist yet, so the layer can't even import:
+
+![Bullet-array breakdown tests failing — function missing](docs/test-evidence/breakdownbullets-red.png)
+
+Green — after adding the array-based prompt, array parsing, and string-to-bullet coercion:
+
+![Bullet-array breakdown tests passing](docs/test-evidence/breakdownbullets-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables
