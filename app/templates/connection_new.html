@@ -16,16 +16,17 @@
       </div>
       <p class="panel__lead">Link a student or observer account to pull its assignments into your report.</p>
       {% if error %}<p class="error">{{ error }}</p>{% endif %}
-      <form class="form" method="post" action="/connections">
+      <form class="form" method="post" action="/connections" autocomplete="off">
         <div class="field">
           <label for="label">Label</label>
-          <input id="label" name="label" placeholder="e.g. Mine, Kid A" required>
+          <input id="label" name="label" placeholder="e.g. My classes, Kid A" autocomplete="off" required>
           <span class="field__hint">A friendly name shown next to each assignment.</span>
         </div>
         <div class="field">
           <label for="base_url">Canvas base URL</label>
-          <input id="base_url" name="base_url" placeholder="https://school.instructure.com" required>
-          <span class="field__hint">Your institution's Canvas domain.</span>
+          <input id="base_url" name="base_url" type="url" inputmode="url"
+                 placeholder="https://yourschool.instructure.com" autocomplete="off" required>
+          <span class="field__hint">Your institution's Canvas domain, including https://.</span>
         </div>
         <div class="field">
           <label for="account_type">Account type</label>
@@ -36,7 +37,9 @@
         </div>
         <div class="field">
           <label for="access_token">Access token</label>
-          <input id="access_token" name="access_token" type="password" placeholder="Paste your Canvas access token" required>
+          <input id="access_token" name="access_token" type="password"
+                 placeholder="e.g. 7~AbC123... (paste your Canvas token)"
+                 autocomplete="new-password" data-lpignore="true" data-1p-ignore required>
           <span class="field__hint">Stored encrypted. We never display or log it again.</span>
         </div>
         <button class="btn btn--primary" type="submit">Save connection</button>
