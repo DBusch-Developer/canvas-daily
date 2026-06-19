@@ -97,13 +97,57 @@ a:hover { text-decoration: underline; }
 .topbar__logo { display: inline-flex; }
 .topbar__logo img { height: 72px; width: auto; display: block; }
 
-.topbar__nav {
+.topbar__inner { position: relative; }
+
+.topbar__toggle {
   margin-left: auto;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: .35rem;
+  justify-content: center;
+  padding: .4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--navy);
+  cursor: pointer;
 }
-.topbar__nav form { display: inline; margin: 0; }
+
+.topbar__nav {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: .2rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: .6rem 24px 1rem;
+  z-index: 20;
+}
+.topbar__nav--open { display: flex; }
+.topbar__nav form { display: block; margin: 0; }
+.topbar__nav .btn { width: 100%; }
+
+@media (min-width: 720px) {
+  .topbar__toggle { display: none; }
+  .topbar__nav {
+    display: flex;
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    margin-left: auto;
+    gap: .35rem;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+  .topbar__nav form { display: inline; }
+  .topbar__nav .btn { width: auto; }
+}
 
 .navlink {
   font-weight: 600;

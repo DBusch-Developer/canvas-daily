@@ -289,6 +289,18 @@ Green — after converting UTC to the course timezone for display and bucketing:
 
 ![Timezone tests passing](docs/test-evidence/timezone-green.png)
 
+**Layer 20 — responsive top-nav (hamburger)**
+
+The top bar had no responsive behavior, so on a phone the desktop nav showed as-is and (with the bigger logo) overflowed. A hamburger toggle now appears below 720px and drops the Dashboard / Account / Log out links into a panel below the bar; at 720px and up the nav stays inline as before. The toggle is a real `<button>` with `aria-expanded`, flipped by a few lines of vanilla JS.
+
+Red — the toggle button and wired nav don't exist yet:
+
+![Mobile-nav tests failing](docs/test-evidence/nav-red.png)
+
+Green — after adding the toggle, the dropdown CSS, and the JS:
+
+![Mobile-nav tests passing](docs/test-evidence/nav-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

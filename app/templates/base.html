@@ -17,7 +17,16 @@
       <a class="topbar__logo" href="/" aria-label="Canvas Daily home">
         <img src="/static/logo.png" alt="Canvas Daily">
       </a>
-      <nav class="topbar__nav" aria-label="Primary">
+      <button class="topbar__toggle" type="button" aria-label="Menu"
+              aria-expanded="false" aria-controls="primary-nav">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <nav class="topbar__nav" id="primary-nav" aria-label="Primary">
         <a class="navlink" href="/">Dashboard</a>
         <a class="navlink" href="/connections">Account</a>
         <form method="post" action="/logout">
@@ -33,5 +42,6 @@
   {% endblock %}
   <script src="/static/htmx.min.js"></script>
   <script src="/static/breakdown.js"></script>
+  <script src="/static/nav.js"></script>
 </body>
 </html>
