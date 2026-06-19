@@ -413,6 +413,8 @@ a:hover { text-decoration: underline; }
 .weekgroup__count { color: var(--muted); font-size: .82rem; }
 .weekgroup .cards { margin: 0 0 .6rem; }
 
+.board__completed summary { cursor: pointer; }
+
 /* ---- Empty states ---------------------------------------------------- */
 
 .empty {
