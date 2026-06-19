@@ -1,0 +1,21 @@
+# Render Blueprint: the Canvas Daily web app.
+# The two daily jobs (sync, email) run for free via GitHub Actions, not here.
+# Secrets (sync: false) are set in the Render dashboard, never committed.
+services:
+  - type: web
+    name: canvas-daily
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.14.2"
+      - key: DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: TOKEN_ENCRYPTION_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false

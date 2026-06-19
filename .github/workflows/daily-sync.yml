@@ -1,0 +1,22 @@
+name: Daily sync
+
+# 6:00 AM America/Phoenix (UTC-7) == 13:00 UTC. GitHub schedules run in UTC.
+on:
+  schedule:
+    - cron: "0 13 * * *"
+  workflow_dispatch: {}   # lets you run it on demand from the Actions tab
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: pip install -r requirements.txt
+      - name: Fetch and store every connection's assignments
+        run: python -m app.jobs sync
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TOKEN_ENCRYPTION_KEY: ${{ secrets.TOKEN_ENCRYPTION_KEY }}
