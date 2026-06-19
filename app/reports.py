@@ -7,7 +7,7 @@ Upcoming via the Layer 1 date classifier — one classifier, not a second copy.
 
 from sqlmodel import select
 
-from app.dates import classify_due
+from app.dates import classify_due, to_local
 from app.models import Assignment, Connection
 
 
@@ -34,5 +34,7 @@ def report_for_user(session, user_id, now):
         if _is_completed(assignment):
             buckets["completed"].append(assignment)
         else:
-            buckets[classify_due(assignment.due_at, now)].append(assignment)
+            tz = assignment.time_zone
+            buckets[classify_due(to_local(assignment.due_at, tz),
+                                 to_local(now, tz))].append(assignment)
     return buckets

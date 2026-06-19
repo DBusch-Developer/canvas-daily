@@ -18,7 +18,7 @@
     </h3>
     {% if a.course_code %}<p class="card__class">{{ a.course_trimmed }}</p>{% endif %}
     <div class="card__foot">
-      <span class="due">due {{ a.due_at }}</span>
+      <span class="due">due {{ a.due_display }}</span>
       {% if a.html_url %}
         <a class="card__open" href="{{ a.html_url }}" target="_blank" rel="noopener">Open ↗</a>
       {% endif %}
@@ -126,7 +126,7 @@
             <h3 class="card__title">{{ a.name }}</h3>
             {% if a.course_code %}<p class="card__class">{{ a.course_trimmed }}</p>{% endif %}
             <div class="card__foot">
-              <span class="due">due {{ a.due_at }}</span>
+              <span class="due">due {{ a.due_display }}</span>
               {% if a.html_url %}
                 <a class="card__open" href="{{ a.html_url }}" target="_blank" rel="noopener">Open in Canvas ↗</a>
               {% endif %}

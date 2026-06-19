@@ -31,7 +31,7 @@ def build_report_email(session, user, now):
         for assignment in items:
             label = assignment.connection.label
             quiz = " (Quiz)" if assignment.is_quiz else ""
-            lines.append(f"  - [{label}] {assignment.name}{quiz} — due {assignment.due_at}")
+            lines.append(f"  - [{label}] {assignment.name}{quiz} — due {assignment.due_display}")
         lines.append("")
 
     subject = f"Canvas Daily — {total} assignment{'s' if total != 1 else ''}"

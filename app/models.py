@@ -11,6 +11,7 @@ from sqlalchemy.types import Text, TypeDecorator
 from sqlmodel import Field, Relationship, SQLModel
 
 from app import crypto
+from app.dates import to_local
 
 
 def _utcnow():
@@ -77,6 +78,7 @@ class Assignment(SQLModel, table=True):
     points_possible: float | None = None
     submission_types: list[str] = Field(default_factory=list, sa_column=Column(JSON))
     course_code: str = ""
+    time_zone: str = ""
     html_url: str = ""
     workflow_state: str | None = None
     score: float | None = None  # null until graded
@@ -102,3 +104,17 @@ class Assignment(SQLModel, table=True):
     def course_trimmed(self) -> str:
         """course_code without a trailing '(...)' section number."""
         return re.sub(r"\s*\([^)]*\)\s*$", "", self.course_code).strip()
+
+    @property
+    def due_local(self):
+        """due_at as an aware datetime in the course's timezone, or None."""
+        return to_local(self.due_at, self.time_zone)
+
+    @property
+    def due_display(self) -> str:
+        """e.g. 'Jun 19, 2026 · 11:59 PM', or 'No due date'."""
+        d = self.due_local
+        if d is None:
+            return "No due date"
+        time_part = d.strftime("%I:%M %p").lstrip("0")
+        return f"{d.strftime('%b')} {d.day}, {d.year} · {time_part}"

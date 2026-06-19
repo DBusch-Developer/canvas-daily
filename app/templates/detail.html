@@ -38,7 +38,7 @@
   <ul class="metagrid">
     <li class="metacard">
       <span class="metacard__label">Due date</span>
-      <span class="metacard__value">{% if a.due_at %}{{ a.due_at }}{% else %}No due date{% endif %}</span>
+      <span class="metacard__value">{{ a.due_display }}</span>
     </li>
     <li class="metacard">
       <span class="metacard__label">Connection</span>

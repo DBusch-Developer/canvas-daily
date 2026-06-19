@@ -277,6 +277,18 @@ Green — after adding the grouping function and the weekly disclosures:
 
 ![Upcoming-by-week tests passing](docs/test-evidence/upcomingweeks-green.png)
 
+**Layer 19 — show due dates in the course's timezone**
+
+Canvas returns due dates in UTC (`2026-06-20T06:59:59Z`), so an assignment Canvas shows as *Jun 19 by 11:59pm* (Arizona) appeared as the next morning at 6:59. Each Canvas course also carries its `time_zone`, so we store it on the assignment and convert: `to_local` turns the UTC moment into the course's zone, `due_display` formats it (`Jun 19, 2026 · 11:59 PM`), and the detail page, cards, email, and the Due-today/Upcoming bucketing all use local time. Storage stays UTC; an empty zone falls back to UTC.
+
+Red — `to_local`, the `time_zone` field, and `due_display` don't exist yet:
+
+![Timezone tests failing](docs/test-evidence/timezone-red.png)
+
+Green — after converting UTC to the course timezone for display and bucketing:
+
+![Timezone tests passing](docs/test-evidence/timezone-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

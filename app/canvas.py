@@ -47,7 +47,8 @@ def fetch_courses(base_url, token, client):
         response = client.get(url, params=params, headers=headers)
         response.raise_for_status()
         courses.extend(
-            {"id": c.get("id"), "name": c.get("name"), "code": c.get("course_code")}
+            {"id": c.get("id"), "name": c.get("name"), "code": c.get("course_code"),
+             "time_zone": c.get("time_zone")}
             for c in response.json()
         )
         url = _next_page(response)
