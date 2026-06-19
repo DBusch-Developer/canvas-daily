@@ -95,7 +95,7 @@ a:hover { text-decoration: underline; }
 }
 
 .topbar__logo { display: inline-flex; }
-.topbar__logo img { height: 32px; width: auto; display: block; }
+.topbar__logo img { height: 72px; width: auto; display: block; }
 
 .topbar__nav {
   margin-left: auto;
