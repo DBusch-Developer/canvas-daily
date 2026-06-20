@@ -313,6 +313,18 @@ Green — after enabling pre-ping and recycle:
 
 ![DB-pool tests passing](docs/test-evidence/dbpool-green.png)
 
+**Layer 22 — branded HTML daily report email**
+
+The daily email was plain text. It's now a branded HTML email (with a plain-text fallback): the hosted logo, the date, the Past due / Due today / Upcoming sections, and each assignment as a card whose **name links to its Canvas Daily detail page**, with the class code, local due time, a status pill, and a Quiz tag. `build_report_html` renders a Jinja email template (status/pill data precomputed in Python); `send_email` gained an HTML alternative. The plain-text `build_report_email` is unchanged, so the `mailer` layer is untouched.
+
+Red — `build_report_html` and the `html=` alternative don't exist yet:
+
+![HTML report email tests failing](docs/test-evidence/reportemail-red.png)
+
+Green — after rendering the HTML email and adding the multipart send:
+
+![HTML report email tests passing](docs/test-evidence/reportemail-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

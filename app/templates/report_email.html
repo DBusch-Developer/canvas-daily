@@ -1,0 +1,27 @@
+{# Daily report email. Inline styles for email clients. Names are autoescaped. #}
+<!doctype html><html><body style="margin:0; padding:0; background:#eef2f9; font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#0d2750;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f9;"><tr><td align="center" style="padding:26px 14px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 6px 18px rgba(13,39,80,.08);">
+<tr><td style="padding:24px 30px 8px;"><img src="{{ logo_url }}" alt="Canvas Daily" width="210" style="display:block; width:210px; max-width:58%; height:auto;"></td></tr>
+<tr><td style="height:3px; background:#f5824f; background:linear-gradient(90deg,#e0218a,#6a4cff,#2f6bff);"></td></tr>
+<tr><td style="padding:22px 30px 2px;"><p style="margin:0; font-size:13px; font-weight:700; letter-spacing:.5px; color:#9aa7bb; text-transform:uppercase;">{{ day }}</p>
+<h1 style="margin:6px 0 0; font-size:22px; line-height:1.25; color:#0d2750;">Here's your day &mdash; {{ total }} thing{{ '' if total == 1 else 's' }} across your classes.</h1></td></tr>
+{% for section in sections %}
+<tr><td style="padding:18px 30px 0;"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:{{ section.chip_bg }}; color:{{ section.chip_fg }}; font-size:12px; font-weight:700; letter-spacing:.5px; padding:5px 12px; border-radius:999px;">{{ section.title | upper }} &middot; {{ section.count }}</td></tr></table></td></tr>
+<tr><td style="padding:10px 30px 0;">
+{% for r in section.rows %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafc; border:1px solid #e9eef6; border-radius:12px; margin-bottom:8px;"><tr><td style="padding:13px 15px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+<td style="font-size:16px; font-weight:700;"><a href="{{ r.url }}" style="color:#0d2750; text-decoration:none;">{{ r.name }}</a>{% if r.is_quiz %} <span style="background:rgba(245,130,79,.14); color:#c2552a; font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px; vertical-align:middle;">Quiz</span>{% endif %}</td>
+<td align="right" style="white-space:nowrap;"><span style="background:{{ r.pill_bg }}; color:{{ r.pill_fg }}; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px;">{{ r.pill }}</span></td>
+</tr></table>
+<p style="margin:5px 0 0; font-size:13px; color:#6b7a90;">{{ r.cls }} &nbsp;&middot;&nbsp; due {{ r.due }}</p>
+</td></tr></table>
+{% endfor %}
+</td></tr>
+{% endfor %}
+<tr><td align="center" style="padding:22px 30px 8px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:10px; background:#0d2750;">
+<a href="{{ base_url }}" style="display:inline-block; padding:13px 26px; font-size:15px; font-weight:700; color:#ffffff; text-decoration:none; border-radius:10px;">Open your dashboard &rarr;</a></td></tr></table>
+<p style="margin:12px 0 0; font-size:13px; color:#8a98ad;">Tip: open any assignment, then hit &ldquo;Break this down with AI&rdquo; for a research plan and outline.</p></td></tr>
+<tr><td style="padding:14px 30px 26px;"><div style="border-top:1px solid #e3e9f2; padding-top:14px;"><p style="margin:0; font-size:12px; line-height:1.6; color:#9aa7bb;">Canvas Daily &middot; One day. Every class.</p></div></td></tr>
+</table></td></tr></table></body></html>
