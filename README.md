@@ -301,6 +301,18 @@ Green — after adding the toggle, the dropdown CSS, and the JS:
 
 ![Mobile-nav tests passing](docs/test-evidence/nav-green.png)
 
+**Layer 21 — resilient DB pool (no stale-connection 500s)**
+
+Neon (serverless Postgres) closes idle connections, so after the app sat idle the pool would hand a request a dead connection — an "Internal Server Error" that a refresh "fixed" (because SQLAlchemy then swapped in a fresh one). The engine now uses `pool_pre_ping=True` (check a connection is alive before using it, transparently replacing dead ones) and `pool_recycle=300` (retire connections older than 5 minutes). These tests pin both settings on the engine `make_engine` builds.
+
+Red — the engine has no pre-ping or recycle (defaults: off / -1):
+
+![DB-pool tests failing](docs/test-evidence/dbpool-red.png)
+
+Green — after enabling pre-ping and recycle:
+
+![DB-pool tests passing](docs/test-evidence/dbpool-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables
