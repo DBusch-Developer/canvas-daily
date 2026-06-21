@@ -148,7 +148,16 @@ def test_assignments_appear_after_background_sync(client, engine):
 
 def test_add_connection_failure_marks_error_and_keeps_it(client, app, engine):
     signup(client, email="bgfail@x.com")
-    app.dependency_overrides[get_canvas_client_factory] = lambda: (lambda: client_for(lambda r: httpx.Response(401, json={"e": 1})))
+
+    # Token verifies (entry-time /users/self passes) but the background sync
+    # itself fails — the connection is kept and marked error.
+    def verifies_then_sync_fails(request):
+        if request.url.path.endswith("/api/v1/users/self"):
+            return httpx.Response(200, json={"id": 1})
+        return httpx.Response(401, json={"e": 1})
+
+    app.dependency_overrides[get_canvas_client_factory] = lambda: (
+        lambda: client_for(verifies_then_sync_fails))
     add_form(client)
     with Session(engine) as s:
         conn = s.exec(select(Connection)).first()

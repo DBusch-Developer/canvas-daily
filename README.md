@@ -325,6 +325,18 @@ Green — after rendering the HTML email and adding the multipart send:
 
 ![HTML report email tests passing](docs/test-evidence/reportemail-green.png)
 
+**Layer 23 — verify the Canvas token at entry**
+
+Adding a connection used to accept any string as an access token, store it, and only discover a bad token in the background sync — the user just saw a spinner settle into a generic failure, with no hint that the *token* was the problem. Now `add_connection` probes Canvas (`GET /api/v1/users/self`) before saving anything: a rejected token (401/403) re-renders the form with "Canvas rejected this access token…" and saves nothing; an unreachable Canvas gets its own message; a valid token saves and syncs exactly as before. `verify_token` returns `ok` / `invalid` / `unreachable`, and never logs the token.
+
+Red — `verify_token` doesn't exist yet:
+
+![Token verification tests failing](docs/test-evidence/verify-red.png)
+
+Green — after adding `verify_token` and the entry-time check:
+
+![Token verification tests passing](docs/test-evidence/verify-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

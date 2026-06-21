@@ -7,6 +7,7 @@ header until there is no `next` — never just page one.
 
 from datetime import datetime, timezone
 
+import httpx
 import nh3
 
 
@@ -30,6 +31,30 @@ def fetch_assignments(base_url, token, course_id, client):
         params = None  # the next URL already carries its own query string
 
     return assignments
+
+
+def verify_token(base_url, token, client):
+    """Probe Canvas with the token. Returns "ok" | "invalid" | "unreachable".
+
+    "ok"          -> Canvas accepted the token (200)
+    "invalid"     -> Canvas rejected the token (401/403)
+    "unreachable" -> any other status, timeout, or network error
+
+    `/users/self` is the lightest authenticated endpoint (one record, no
+    pagination), so this checks the token without pulling any course data. The
+    token is never logged.
+    """
+    url = f"{base_url.rstrip('/')}/api/v1/users/self"
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        response = client.get(url, headers=headers)
+    except httpx.HTTPError:
+        return "unreachable"
+    if response.status_code == 200:
+        return "ok"
+    if response.status_code in (401, 403):
+        return "invalid"
+    return "unreachable"
 
 
 def fetch_courses(base_url, token, client):

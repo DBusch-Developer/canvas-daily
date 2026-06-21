@@ -19,20 +19,20 @@
       <form class="form" method="post" action="/connections" autocomplete="off">
         <div class="field">
           <label for="label">Label</label>
-          <input id="label" name="label" placeholder="e.g. My classes, Kid A" autocomplete="off" required>
+          <input id="label" name="label" value="{{ label or '' }}" placeholder="e.g. My classes, Kid A" autocomplete="off" required>
           <span class="field__hint">A friendly name shown next to each assignment.</span>
         </div>
         <div class="field">
           <label for="base_url">Canvas base URL</label>
-          <input id="base_url" name="base_url" type="url" inputmode="url"
+          <input id="base_url" name="base_url" type="url" inputmode="url" value="{{ base_url or '' }}"
                  placeholder="https://yourschool.instructure.com" autocomplete="off" required>
           <span class="field__hint">Your institution's Canvas domain, including https://.</span>
         </div>
         <div class="field">
           <label for="account_type">Account type</label>
           <select id="account_type" name="account_type">
-            <option value="student">Student</option>
-            <option value="observer">Observer</option>
+            <option value="student" {% if account_type == 'observer' %}{% else %}selected{% endif %}>Student</option>
+            <option value="observer" {% if account_type == 'observer' %}selected{% endif %}>Observer</option>
           </select>
         </div>
         <div class="field">

@@ -20,6 +20,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.ai import AIError, AITimeoutError, generate_bullets
 from app.auth import hash_password, verify_password
+from app.canvas import verify_token
 from app.dates import group_by_week
 from app.db import make_engine
 from app.models import Assignment, Connection, User
@@ -197,6 +198,28 @@ def create_app():
         user = _current_user(request, session)
         if user is None:
             return RedirectResponse("/login", status_code=303)
+        # Verify the token with Canvas before storing anything — a rejected or
+        # unverifiable token fails fast in the form, never as a silent
+        # background error. The token is never logged.
+        client = client_factory()
+        try:
+            result = verify_token(base_url, access_token, client)
+        finally:
+            client.close()
+        if result != "ok":
+            message = (
+                "Canvas rejected this access token. In Canvas, go to "
+                "Account → Settings, generate a new access token, and paste it again."
+                if result == "invalid" else
+                "We couldn't reach Canvas to verify this connection. "
+                "Double-check the base URL and try again."
+            )
+            return TEMPLATES.TemplateResponse(
+                request, "connection_new.html",
+                {"error": message, "label": label, "base_url": base_url,
+                 "account_type": account_type},
+                status_code=400,
+            )
         connection = Connection(
             user_id=user.id, label=label, base_url=base_url,
             account_type=account_type, access_token=access_token,
