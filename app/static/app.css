@@ -621,10 +621,11 @@ input:focus, select:focus {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   position: relative;
 }
 .gate__brand .brand-rule { position: absolute; left: 0; right: 0; bottom: 0; }
-.gate__brand-inner { max-width: 420px; }
+.gate__brand-inner { max-width: 460px; text-align: center; }
 .gate__logo {
   display: inline-flex;
   background: #fff;
@@ -632,9 +633,9 @@ input:focus, select:focus {
   border-radius: var(--radius);
   margin-bottom: 28px;
 }
-.gate__logo img { height: 72px; width: auto; display: block; }
-.gate__headline { color: #fff; font-size: 2.1rem; line-height: 1.1; margin: 0 0 .8rem; }
-.gate__pitch { color: #c7d3e6; font-size: 1.05rem; margin: 0; }
+.gate__logo img { height: 88px; width: auto; display: block; }
+.gate__headline { color: #fff; font-size: 2.6rem; line-height: 1.1; margin: 0 0 .9rem; }
+.gate__pitch { color: #c7d3e6; font-size: 1.18rem; margin: 0; }
 
 .gate__panel { display: grid; place-items: center; padding: 40px 24px; background: var(--bg); }
 .gate__card {
