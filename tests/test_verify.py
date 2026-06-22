@@ -56,8 +56,15 @@ def engine():
 
 
 @pytest.fixture(autouse=True)
-def wipe(engine):
+def wipe(request):
     yield
+    # Only the DB-backed handler tests request `engine`; the pure unit tests
+    # don't, so skip the wipe (and never touch TEST_DATABASE_URL) for them.
+    # Without this guard, autouse would force the engine fixture for every
+    # test and KeyError in CI, where TEST_DATABASE_URL isn't set.
+    if "engine" not in request.fixturenames:
+        return
+    engine = request.getfixturevalue("engine")
     with engine.begin() as conn:
         for table in reversed(SQLModel.metadata.sorted_tables):
             conn.execute(table.delete())
