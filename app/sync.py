@@ -6,6 +6,7 @@ duplicate. The caller owns the transaction (commits once the run succeeds).
 
 from datetime import datetime, timezone
 
+import httpx
 from sqlmodel import select
 
 from app.canvas import fetch_assignments, fetch_courses
@@ -36,10 +37,33 @@ def sync_connection(session, connection, client):
 
 
 def run_daily_sync(session, client):
-    """Sync every connection. One path for one connection and for four."""
+    """Sync every connection. One path for one connection and for four.
+
+    Per-connection resilient: a single connection failing marks only that
+    connection `error` and does not abort the rest. Returns the connections
+    that newly broke on a Canvas token rejection (401/403) — i.e. were not
+    already `error` — so the caller can notify their owners once.
+    """
+    newly_broken = []
     for connection in session.exec(select(Connection)).all():
-        sync_connection(session, connection, client)
+        was_error = connection.sync_status == "error"
+        try:
+            sync_connection(session, connection, client)
+            connection.sync_status = "ok"
+        except Exception as exc:
+            connection.sync_status = "error"
+            if not was_error and _is_token_rejection(exc):
+                newly_broken.append(connection)
+        session.add(connection)
     session.flush()
+    return newly_broken
+
+
+def _is_token_rejection(exc):
+    return (
+        isinstance(exc, httpx.HTTPStatusError)
+        and exc.response.status_code in (401, 403)
+    )
 
 
 def _upsert(session, connection_id, parsed, course_code="", time_zone=""):

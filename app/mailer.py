@@ -95,6 +95,33 @@ def build_report_email(session, user, now):
     return subject, "\n".join(lines).rstrip() + "\n"
 
 
+def build_token_error_email(connection, base_url):
+    """Return (subject, text_body, html) telling a user one connection's token
+    was rejected by Canvas. The token is never included."""
+    subject = f"Action needed: reconnect {connection.label} on Canvas Daily"
+    text_body = (
+        f"Canvas stopped accepting the access token for {connection.label}, so "
+        f"new assignments from it aren't showing up in your daily report.\n\n"
+        "To fix it:\n"
+        "1. Log in to Canvas and open Account > Settings.\n"
+        "2. Under Approved Integrations, click + New Access Token. Give it a "
+        "purpose like \"Canvas Daily\" and set the expiration date as far in the "
+        "future as Canvas allows (it's required).\n"
+        "3. Click Generate Token, then select the whole token and copy it "
+        "manually -- Canvas shows it only once and there's no copy button.\n"
+        "4. Back in Canvas Daily, remove this connection and add it again with "
+        "the new token.\n\n"
+        f"Fix it here: {base_url}/connections\n\n"
+        "Canvas Daily - One day. Every class.\n"
+    )
+    html = _EMAIL_TEMPLATES.get_template("token_error_email.html").render(
+        logo_url=f"{base_url}/static/logo.png",
+        base_url=base_url,
+        label=connection.label,
+    )
+    return subject, text_body, html
+
+
 def send_email(smtp, sender, recipient, subject, body, html=None):
     """Hand a message to an SMTP client. With `html`, send multipart (text + html)."""
     msg = EmailMessage()

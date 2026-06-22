@@ -337,6 +337,18 @@ Green — after adding `verify_token` and the entry-time check:
 
 ![Token verification tests passing](docs/test-evidence/verify-green.png)
 
+**Layer 24 — email the user when a connection's token breaks**
+
+A Canvas token can stop working after it was added (revoked, expired, regenerated). The daily sync had no per-connection error handling — the first 401 aborted the whole run, and nobody was told. Now `run_daily_sync` marks each connection ok/error independently (one bad token no longer stops everyone's fetch) and returns the connections that *newly* broke on a token rejection; `jobs.run_sync` emails each owner once — branded like the daily report — with steps to issue a new token. Outages and already-broken connections don't trigger it, and the token never appears in the email.
+
+Red — `run_daily_sync` doesn't return broken connections and `build_token_error_email` doesn't exist:
+
+![Token alert tests failing](docs/test-evidence/tokenalert-red.png)
+
+Green — after adding per-connection resilience and the branded alert email:
+
+![Token alert tests passing](docs/test-evidence/tokenalert-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

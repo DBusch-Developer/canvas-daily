@@ -30,7 +30,7 @@ from dotenv import load_dotenv
 from sqlmodel import Session
 
 from app.db import make_engine
-from app.mailer import send_daily_reports
+from app.mailer import build_token_error_email, send_daily_reports, send_email
 from app.sync import run_daily_sync
 
 
@@ -46,11 +46,35 @@ def _engine():
 
 
 def run_sync():
-    """Daily pre-fetch: store every connection's assignments, then commit."""
+    """Daily pre-fetch: store every connection's assignments, then email the
+    owner of any connection whose token Canvas newly rejected."""
     engine = _engine()
     with Session(engine) as session, httpx.Client(timeout=30.0) as client:
-        run_daily_sync(session, client)
+        newly_broken = run_daily_sync(session, client)
         session.commit()
+        _email_broken_connections(session, newly_broken)
+
+
+def _email_broken_connections(session, connections):
+    """Send one token-error email per newly-broken connection. Best-effort: a
+    missing SMTP config or a single send failure never aborts the sync, and the
+    token is never logged."""
+    if not connections:
+        return
+    if not os.environ.get("SMTP_HOST"):
+        return
+    base_url = os.environ.get("PUBLIC_BASE_URL", "https://canvas-daily.org")
+    sender = os.environ.get("SMTP_FROM") or os.environ.get("SMTP_USERNAME")
+    smtp = _connect_smtp()
+    try:
+        for connection in connections:
+            subject, text_body, html = build_token_error_email(connection, base_url)
+            try:
+                send_email(smtp, sender, connection.user.email, subject, text_body, html=html)
+            except Exception:
+                pass
+    finally:
+        smtp.quit()
 
 
 def _connect_smtp():
