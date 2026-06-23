@@ -24,7 +24,7 @@ from app.canvas import verify_token
 from app.dates import group_by_week
 from app.db import make_engine
 from app.models import Assignment, Connection, User
-from app.reports import report_for_user
+from app.reports import excuse_assignment, report_for_user
 from app.sync import sync_connection
 
 logger = logging.getLogger(__name__)
@@ -272,6 +272,16 @@ def create_app():
             return RedirectResponse("/login", status_code=303)
         assignment = _owned_assignment_or_404(session, assignment_id, user)
         return TEMPLATES.TemplateResponse(request, "detail.html", {"a": assignment})
+
+    @app.post("/assignments/{assignment_id}/excuse")
+    def excuse(request: Request, assignment_id: int,
+               session: Session = Depends(get_session)):
+        user = _current_user(request, session)
+        if user is None:
+            return RedirectResponse("/login", status_code=303)
+        _owned_assignment_or_404(session, assignment_id, user)
+        excuse_assignment(session, assignment_id)
+        return RedirectResponse("/", status_code=303)
 
     @app.post("/assignments/{assignment_id}/breakdown")
     def breakdown(request: Request, assignment_id: int,

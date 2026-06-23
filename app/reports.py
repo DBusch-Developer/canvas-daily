@@ -20,6 +20,15 @@ def _is_completed(assignment):
     )
 
 
+def excuse_assignment(session, assignment_id):
+    """Mark one assignment excused so it leaves Past due for Completed."""
+    assignment = session.get(Assignment, assignment_id)
+    assignment.excused = True
+    session.add(assignment)
+    session.commit()
+    return assignment
+
+
 def report_for_user(session, user_id, now):
     statement = (
         select(Assignment)

@@ -349,6 +349,30 @@ Green — after adding per-connection resilience and the branded alert email:
 
 ![Token alert tests passing](docs/test-evidence/tokenalert-green.png)
 
+**Layer 25 — excuse an assignment so it leaves Past due**
+
+A past-due missing assignment sits in the Past due bucket with nothing you can do about it from here. Now `excuse_assignment` marks one assignment excused, so the next report drops it out of Past due and into Completed — reusing the same "done = submitted, graded, or excused" rule the report already applies, with no second code path.
+
+Red — `excuse_assignment` doesn't exist yet:
+
+![Excuse tests failing](docs/test-evidence/excuse-red.png)
+
+Green — after adding `excuse_assignment`:
+
+![Excuse tests passing](docs/test-evidence/excuse-green.png)
+
+**Layer 26 — "Mark excused" button on the assignment page**
+
+Layer 25 added the excuse rule but no way to trigger it from the screen. The detail page now has a **Mark excused** button (hidden once the work is already done) that asks for a native confirm() first, then POSTs to an excuse endpoint. The endpoint checks ownership, excuses the assignment, and 303-redirects back to the dashboard — where the item now sits in Completed instead of Past due. Server-rendered form, no HTMX.
+
+Red — the button isn't in the template and the excuse endpoint 404s:
+
+![Excuse-button tests failing](docs/test-evidence/excusebutton-red.png)
+
+Green — after adding the endpoint and the confirming button:
+
+![Excuse-button tests passing](docs/test-evidence/excusebutton-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables
