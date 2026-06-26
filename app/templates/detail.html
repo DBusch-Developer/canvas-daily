@@ -24,7 +24,7 @@
       {% endif %}
       {# Excuse it: confirm, then the POST moves it to Completed and returns home.
          Hidden once it's already done — there's nothing to excuse. #}
-      {% if not (a.excused or a.submitted_at or a.workflow_state == 'graded') %}
+      {% if not (a.excused or a.manually_excused or a.submitted_at or a.workflow_state == 'graded') %}
         <form method="post" action="/assignments/{{ a.id }}/excuse"
               onsubmit="return confirm('Mark this assignment as excused? It will move to Completed.');">
           <button class="btn btn--ghost" type="submit">Mark excused</button>

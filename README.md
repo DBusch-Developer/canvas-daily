@@ -373,6 +373,18 @@ Green — after adding the endpoint and the confirming button:
 
 ![Excuse-button tests passing](docs/test-evidence/excusebutton-green.png)
 
+**Layer 27 — a manual excuse survives the daily sync**
+
+Layers 25–26 let you excuse an assignment, but they wrote Canvas's own `excused` field — and the nightly sync re-fetches every assignment from Canvas and stamps its copy back over yours. Canvas never heard about your excuse, so it returned `excused = false` and the item resurfaced as past due the next morning. This layer splits the two meanings: `excused` stays Canvas-owned (an instructor really can excuse you, and the sync keeps that), while a new user-owned `manually_excused` flag carries the Mark excused action and the sync never touches it. "Done" now counts either one, so a manual excuse is sticky and the detail page stops offering Mark excused once it holds.
+
+Red — after an excuse, a sync re-fetches Canvas's un-excused copy and the item falls back into Past due:
+
+![Sticky-excuse tests failing](docs/test-evidence/stickyexcuse-red.png)
+
+Green — the manual excuse survives the sync and the button hides:
+
+![Sticky-excuse tests passing](docs/test-evidence/stickyexcuse-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

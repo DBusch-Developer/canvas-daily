@@ -85,7 +85,10 @@ class Assignment(SQLModel, table=True):
     submitted_at: datetime | None = None
     late: bool = False
     missing: bool = False
-    excused: bool = False
+    excused: bool = False  # Canvas-owned: the instructor excused it. Sync writes this.
+    # User-owned: you pressed "Mark excused". The daily sync NEVER touches this, so
+    # a manual excuse is sticky and survives a re-fetch of Canvas's un-excused copy.
+    manually_excused: bool = False
     fetched_at: datetime = Field(default_factory=_utcnow)
 
     connection: Connection | None = Relationship(back_populates="assignments")

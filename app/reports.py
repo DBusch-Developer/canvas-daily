@@ -12,18 +12,24 @@ from app.models import Assignment, Connection
 
 
 def _is_completed(assignment):
-    """Done = turned in, graded, or excused. 'Missing' is not completed."""
+    """Done = turned in, graded, excused in Canvas, or excused by the user.
+    'Missing' is not completed."""
     return (
         assignment.submitted_at is not None
         or assignment.workflow_state == "graded"
         or assignment.excused
+        or assignment.manually_excused
     )
 
 
 def excuse_assignment(session, assignment_id):
-    """Mark one assignment excused so it leaves Past due for Completed."""
+    """Mark one assignment excused so it leaves Past due for Completed.
+
+    Sets the user-owned `manually_excused` flag — not Canvas's `excused`, which
+    the daily sync overwrites — so the excuse is sticky and survives every sync.
+    """
     assignment = session.get(Assignment, assignment_id)
-    assignment.excused = True
+    assignment.manually_excused = True
     session.add(assignment)
     session.commit()
     return assignment
