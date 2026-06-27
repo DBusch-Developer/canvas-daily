@@ -123,6 +123,28 @@ def run_connection_sync(engine, connection_id, client_factory):
         session.commit()
 
 
+def run_course_content_sync(engine, course_id, client_factory):
+    """Sync one course's Canvas content in the background.
+
+    Opens its own session (the request's is gone). Never logs the token.
+    """
+    with Session(engine) as session:
+        course = session.get(Course, course_id)
+        if course is None:
+            return
+        connection = session.get(Connection, course.connection_id)
+        if connection is None:
+            return
+        client = client_factory()
+        try:
+            sync_course_content(session, connection, course, client)
+        except Exception:
+            logger.warning("background content sync failed for course %s", course_id)
+        finally:
+            client.close()
+        session.commit()
+
+
 def create_app():
     TEMPLATES.env.globals["ask_course_enabled"] = _ask_course_enabled
     app = FastAPI()
@@ -363,25 +385,22 @@ def create_app():
 
     @app.post("/courses/{course_id}/sync-content")
     def sync_content(request: Request, course_id: int,
+                     background_tasks: BackgroundTasks,
                      session: Session = Depends(get_session),
+                     engine=Depends(get_engine),
                      client_factory=Depends(get_canvas_client_factory)):
         if not _ask_course_enabled():
             raise HTTPException(status_code=404)
         user = _current_user(request, session)
         if user is None:
             return RedirectResponse("/login", status_code=303)
-        course = _owned_course_or_404(session, course_id, user)
-        connection = session.get(Connection, course.connection_id)
-        client = client_factory()
-        try:
-            sync_course_content(session, connection, course, client)
-            session.commit()
-        finally:
-            client.close()
-        return RedirectResponse(f"/courses/{course_id}/ask", status_code=303)
+        _owned_course_or_404(session, course_id, user)
+        background_tasks.add_task(run_course_content_sync, engine, course_id, client_factory)
+        return RedirectResponse(f"/courses/{course_id}/ask?syncing=1", status_code=303)
 
     @app.get("/courses/{course_id}/ask")
     def course_ask_page(request: Request, course_id: int,
+                        syncing: str | None = None,
                         session: Session = Depends(get_session)):
         if not _ask_course_enabled():
             raise HTTPException(status_code=404)
@@ -391,7 +410,8 @@ def create_app():
         course = _owned_course_or_404(session, course_id, user)
         return TEMPLATES.TemplateResponse(request, "course_chat.html",
                                           {"course": course, "question": None,
-                                           "answer": None, "sources": []})
+                                           "answer": None, "sources": [],
+                                           "syncing": bool(syncing)})
 
     @app.post("/courses/{course_id}/ask")
     def course_ask(request: Request, course_id: int,

@@ -17,7 +17,7 @@ from sqlmodel import Session, SQLModel, select
 from app.db import make_engine
 from app.models import Connection, Course, User
 from app.rag.fts import ensure_search_vector
-from app.web import create_app, get_canvas_client_factory, get_groq_client, get_session
+from app.web import create_app, get_canvas_client_factory, get_engine, get_groq_client, get_session
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("TEST_DATABASE_URL"),
@@ -77,7 +77,11 @@ def _make_app(engine, canvas_handler=None, groq_handler=None):
         with Session(engine) as s:
             yield s
 
+    def _get_engine():
+        return engine
+
     application.dependency_overrides[get_session] = _get_session
+    application.dependency_overrides[get_engine] = _get_engine
 
     if canvas_handler is not None:
         def _canvas_factory():

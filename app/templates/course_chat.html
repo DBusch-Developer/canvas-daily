@@ -4,7 +4,9 @@
 <form method="post" action="/courses/{{ course.id }}/sync-content">
   <button class="btn btn--ghost" type="submit">Sync course content</button>
 </form>
-{% if course.last_content_synced_at %}
+{% if syncing %}
+  <p class="muted">Syncing course content in the background — this can take a minute for large courses. Refresh to see it.</p>
+{% elif course.last_content_synced_at %}
   <p class="muted">Last synced {{ course.last_content_synced_at }}</p>
 {% else %}
   <p class="muted">Not synced yet — sync before asking.</p>

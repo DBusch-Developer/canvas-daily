@@ -469,6 +469,18 @@ Green — after adding `_upsert_course` to `app/sync.py`:
 
 ![Course sync tests passing](docs/test-evidence/coursesync-green.png)
 
+**Layer 35 — background course-content sync**
+
+Syncing a course's Canvas content now runs in a FastAPI `BackgroundTask` so PDF-heavy courses (a minute or more of downloads and extraction) don't time out behind Render's proxy. `run_course_content_sync` opens its own DB session (the request session is already gone), loads the course and its connection, calls `sync_course_content`, and commits — mirroring the existing `run_connection_sync` pattern. The `sync_content` route drops its inline work, schedules the background task, and immediately 303-redirects to `/courses/{id}/ask?syncing=1`. The ask page reads the `syncing` query param and shows a notice when it's present. Tested with in-memory SQLite, StaticPool, and a mocked Canvas client; no Neon required.
+
+Red — `run_course_content_sync` absent, route redirects without `?syncing=1`, template has no notice:
+
+![Background content sync tests failing — 3 red failures](docs/test-evidence/bgcontentsync-red.png)
+
+Green — after adding the background function, updating the route and the template:
+
+![Background content sync tests passing — 3 green passes](docs/test-evidence/bgcontentsync-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables
