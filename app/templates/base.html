@@ -29,7 +29,6 @@
       <nav class="topbar__nav" id="primary-nav" aria-label="Primary">
         <a class="navlink" href="/">Dashboard</a>
         <a class="navlink" href="/connections">Account</a>
-        {% if ask_course_enabled() %}<a class="navlink" href="/ask">Ask my course</a>{% endif %}
         <form method="post" action="/logout">
           <button class="btn btn--ghost btn--sm" type="submit">Log out</button>
         </form>
