@@ -213,6 +213,9 @@ def test_sync_then_ask_renders_answer_with_sources(engine, monkeypatch):
     assert "10 percent" in body
     # Syllabus source link must appear.
     assert f"/courses/{CANVAS_COURSE_ID}/assignments/syllabus" in body
+    # Source links open in a new tab so the student doesn't lose the answer.
+    assert 'target="_blank"' in body
+    assert 'rel="noopener"' in body
 
 
 def test_empty_question_returns_refusal_without_calling_groq(engine, monkeypatch):

@@ -24,7 +24,7 @@
   <h3>Sources</h3>
   <ul>
     {% for s in sources %}
-      <li>{% if s.url %}<a href="{{ s.url }}">{{ s.title }}</a>{% else %}{{ s.title }}{% endif %}</li>
+      <li>{% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener">{{ s.title }}</a>{% else %}{{ s.title }}{% endif %}</li>
     {% endfor %}
   </ul>
   {% endif %}
