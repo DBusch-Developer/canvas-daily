@@ -90,3 +90,29 @@ def test_one_bad_pdf_does_not_abort_rest():
     docs = fetch_pdf_documents(BASE, "tok", 7, client)
     assert len(docs) == 1, f"expected 1 doc (the valid PDF), got {len(docs)}"
     assert docs[0]["title"] == "Good.pdf"
+
+
+def test_pdf_download_follows_redirect():
+    """Canvas file URLs 302-redirect to a CDN; the download must follow the
+    redirect or every PDF (the real lecture slideshows) is silently dropped."""
+    pdf_bytes = _one_page_pdf_bytes("lecture slides")
+
+    def handler(request):
+        path = request.url.path
+        if path.endswith("/files"):
+            return httpx.Response(200, json=[
+                {"id": 1, "display_name": "Lecture.pdf",
+                 "content-type": "application/pdf",
+                 "url": f"{BASE}/files/1/download",
+                 "html_url": f"{BASE}/courses/7/files/1"},
+            ])
+        if path.endswith("/files/1/download"):
+            return httpx.Response(302, headers={"Location": f"{BASE}/cdn/1.pdf"})
+        if path.endswith("/cdn/1.pdf"):
+            return httpx.Response(200, content=pdf_bytes)
+        return httpx.Response(404, content=b"")
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    docs = fetch_pdf_documents(BASE, "tok", 7, client)
+    assert len(docs) == 1, f"expected the redirected PDF to be fetched, got {len(docs)}"
+    assert docs[0]["title"] == "Lecture.pdf"

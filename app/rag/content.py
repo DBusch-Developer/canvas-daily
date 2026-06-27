@@ -128,7 +128,10 @@ def fetch_pdf_documents(base_url, token, course_id, client):
         if f.get("content-type") != "application/pdf":
             continue
         try:
-            download = client.get(f.get("url"), headers=_headers(token))
+            # Canvas file URLs 302-redirect to a CDN; follow it or every PDF
+            # (the real lecture slideshows) comes back as an empty 302 body.
+            download = client.get(f.get("url"), headers=_headers(token),
+                                  follow_redirects=True)
             download.raise_for_status()
             text = extract_pdf_text(download.content)
         except httpx.HTTPStatusError as exc:
