@@ -457,6 +457,18 @@ Green — after wiring `app/sync_content.py`, the four routes in `app/web.py`, a
 
 ![Ask My Course web flow tests passing](docs/test-evidence/askcourseweb-green.png)
 
+**Layer 34 — populate courses for Ask My Course**
+
+`sync_connection` now upserts a `Course` row for every course Canvas returns, keyed on `(connection_id, canvas_course_id)`. Before this layer the `courses` table was never written, so the Ask My Course picker was always empty and the feature was unreachable. The upsert is purely additive — existing assignment-storing behavior is unchanged, and one code path handles one connection or many. Tested with in-memory SQLite and a mocked Canvas client; no Neon required.
+
+Red — Course upsert absent; all three tests fail:
+
+![Course sync tests failing](docs/test-evidence/coursesync-red.png)
+
+Green — after adding `_upsert_course` to `app/sync.py`:
+
+![Course sync tests passing](docs/test-evidence/coursesync-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

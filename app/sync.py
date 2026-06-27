@@ -10,7 +10,7 @@ import httpx
 from sqlmodel import select
 
 from app.canvas import fetch_assignments, fetch_courses
-from app.models import Assignment, Connection
+from app.models import Assignment, Connection, Course
 
 _FIELDS = (
     "name", "description", "due_at", "points_possible", "submission_types",
@@ -25,6 +25,7 @@ def _now():
 def sync_connection(session, connection, client):
     """Fetch and store every assignment across one connection's courses."""
     for course in fetch_courses(connection.base_url, connection.access_token, client):
+        _upsert_course(session, connection.id, course)
         parsed_list = fetch_assignments(
             connection.base_url, connection.access_token, course["id"], client
         )
@@ -64,6 +65,22 @@ def _is_token_rejection(exc):
         isinstance(exc, httpx.HTTPStatusError)
         and exc.response.status_code in (401, 403)
     )
+
+
+def _upsert_course(session, connection_id, course):
+    """Insert or update a Course row keyed on (connection_id, canvas_course_id)."""
+    existing = session.exec(
+        select(Course).where(
+            Course.connection_id == connection_id,
+            Course.canvas_course_id == course["id"],
+        )
+    ).first()
+    target = existing or Course(
+        connection_id=connection_id,
+        canvas_course_id=course["id"],
+    )
+    target.name = course["name"]
+    session.add(target)
 
 
 def _upsert(session, connection_id, parsed, course_code="", time_zone=""):
