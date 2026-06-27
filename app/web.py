@@ -23,9 +23,12 @@ from app.auth import hash_password, verify_password
 from app.canvas import verify_token
 from app.dates import group_by_week
 from app.db import make_engine
-from app.models import Assignment, Connection, User
+from app.models import Assignment, Connection, Course, User
+from app.rag.answer import answer_question
+from app.rag.retrieve import retrieve
 from app.reports import excuse_assignment, report_for_user
 from app.sync import sync_connection
+from app.sync_content import sync_course_content
 
 logger = logging.getLogger(__name__)
 
@@ -72,11 +75,25 @@ def _current_user(request, session):
     return session.get(User, user_id) if user_id is not None else None
 
 
+def _ask_course_enabled() -> bool:
+    return os.environ.get("ASK_COURSE_ENABLED", "").lower() in ("1", "true", "yes")
+
+
 def _owned_assignment_or_404(session, assignment_id, user):
     assignment = session.get(Assignment, assignment_id)
     if assignment is None or assignment.connection.user_id != user.id:
         raise HTTPException(status_code=404)
     return assignment
+
+
+def _owned_course_or_404(session, course_id, user):
+    course = session.get(Course, course_id)
+    if course is None:
+        raise HTTPException(status_code=404)
+    connection = session.get(Connection, course.connection_id)
+    if connection is None or connection.user_id != user.id:
+        raise HTTPException(status_code=404)
+    return course
 
 
 def _owned_connection_or_404(session, connection_id, user):
@@ -107,6 +124,7 @@ def run_connection_sync(engine, connection_id, client_factory):
 
 
 def create_app():
+    TEMPLATES.env.globals["ask_course_enabled"] = _ask_course_enabled
     app = FastAPI()
     app.add_middleware(
         SessionMiddleware,
@@ -328,5 +346,77 @@ def create_app():
             )
         return TEMPLATES.TemplateResponse(
             request, template, {"a": assignment, "sections": sections})
+
+    @app.get("/ask")
+    def ask_picker(request: Request, session: Session = Depends(get_session)):
+        if not _ask_course_enabled():
+            raise HTTPException(status_code=404)
+        user = _current_user(request, session)
+        if user is None:
+            return RedirectResponse("/login", status_code=303)
+        courses = session.exec(
+            select(Course).join(Connection, Course.connection_id == Connection.id)
+            .where(Connection.user_id == user.id)
+        ).all()
+        return TEMPLATES.TemplateResponse(request, "course_picker.html",
+                                          {"courses": courses})
+
+    @app.post("/courses/{course_id}/sync-content")
+    def sync_content(request: Request, course_id: int,
+                     session: Session = Depends(get_session),
+                     client_factory=Depends(get_canvas_client_factory)):
+        if not _ask_course_enabled():
+            raise HTTPException(status_code=404)
+        user = _current_user(request, session)
+        if user is None:
+            return RedirectResponse("/login", status_code=303)
+        course = _owned_course_or_404(session, course_id, user)
+        connection = session.get(Connection, course.connection_id)
+        client = client_factory()
+        try:
+            sync_course_content(session, connection, course, client)
+            session.commit()
+        finally:
+            client.close()
+        return RedirectResponse(f"/courses/{course_id}/ask", status_code=303)
+
+    @app.get("/courses/{course_id}/ask")
+    def course_ask_page(request: Request, course_id: int,
+                        session: Session = Depends(get_session)):
+        if not _ask_course_enabled():
+            raise HTTPException(status_code=404)
+        user = _current_user(request, session)
+        if user is None:
+            return RedirectResponse("/login", status_code=303)
+        course = _owned_course_or_404(session, course_id, user)
+        return TEMPLATES.TemplateResponse(request, "course_chat.html",
+                                          {"course": course, "question": None,
+                                           "answer": None, "sources": []})
+
+    @app.post("/courses/{course_id}/ask")
+    def course_ask(request: Request, course_id: int,
+                   question: str = Form(...),
+                   session: Session = Depends(get_session),
+                   client: httpx.Client = Depends(get_groq_client)):
+        if not _ask_course_enabled():
+            raise HTTPException(status_code=404)
+        user = _current_user(request, session)
+        if user is None:
+            return RedirectResponse("/login", status_code=303)
+        course = _owned_course_or_404(session, course_id, user)
+        question = question.strip()[:500]
+        if not question:
+            return TEMPLATES.TemplateResponse(
+                request, "course_chat.html",
+                {"course": course, "question": "",
+                 "answer": "I don't know based on the provided course documents.",
+                 "sources": []},
+            )
+        chunks = retrieve(session, course.id, question, k=5)
+        result = answer_question(question, chunks, client)
+        return TEMPLATES.TemplateResponse(request, "course_chat.html",
+                                          {"course": course, "question": question,
+                                           "answer": result["answer"],
+                                           "sources": result["sources"]})
 
     return app
