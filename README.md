@@ -433,6 +433,18 @@ Green — after adding the three tables, `app/rag/fts.py`, and `app/rag/retrieve
 
 ![Course retrieval tests passing](docs/test-evidence/courseretrieval-green.png)
 
+**Layer 32 — grounded answer from course content**
+
+`answer_question(question, chunks, client)` calls Groq (llama-3.3-70b-versatile, temperature 0.1) with only the retrieved chunks as context. It deduplicates sources in retrieval order, short-circuits to the fixed refusal string when chunks is empty (no Groq call), maps timeout to a clean error dict, and keeps the API key in the Authorization header — never in the request body or logs. Groq is mocked at the httpx transport boundary.
+
+Red — `app/rag/answer.py` doesn't exist yet:
+
+![Grounded answer tests failing](docs/test-evidence/askcourse-red.png)
+
+Green — after adding `answer_question` in `app/rag/answer.py`:
+
+![Grounded answer tests passing](docs/test-evidence/askcourse-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables
