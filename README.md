@@ -385,6 +385,18 @@ Green — the manual excuse survives the sync and the button hides:
 
 ![Sticky-excuse tests passing](docs/test-evidence/stickyexcuse-green.png)
 
+**Layer 28 — chunk course text for retrieval**
+
+The RAG retrieves paragraph-sized pieces, so `chunk_text` splits sanitized course text on blank lines, drops empty runs, and hard-splits any over-long paragraph on word boundaries without losing content. Pure function, no mocks.
+
+Red — `chunk_text` doesn't exist yet:
+
+![Chunk tests failing](docs/test-evidence/ragchunk-red.png)
+
+Green — after adding `chunk_text`:
+
+![Chunk tests passing](docs/test-evidence/ragchunk-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables
