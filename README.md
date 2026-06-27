@@ -409,6 +409,18 @@ Green — after adding `fetch_syllabus`, `fetch_pages`, `fetch_module_items`, `f
 
 ![Course-content fetch tests passing](docs/test-evidence/coursecontent-green.png)
 
+**Layer 30 — index course PDF files**
+
+The Canvas Files API is listed for each course; only `application/pdf` files are downloaded. Text is extracted with pypdf — a corrupt or unreadable file returns `""` and never raises. Valid files are returned as document dicts with `source_type="file_pdf"`. Canvas is mocked at the httpx transport boundary.
+
+Red — `app/rag/pdf.py` doesn't exist and `fetch_pdf_documents` isn't in `content.py` yet:
+
+![PDF-indexing tests failing](docs/test-evidence/pdftext-red.png)
+
+Green — after adding `extract_pdf_text` and `fetch_pdf_documents`:
+
+![PDF-indexing tests passing](docs/test-evidence/pdftext-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

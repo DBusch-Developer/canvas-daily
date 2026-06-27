@@ -9,6 +9,7 @@ token is never logged.
 import nh3
 
 from app.canvas import _next_page
+from app.rag.pdf import extract_pdf_text
 
 
 def _headers(token):
@@ -108,5 +109,26 @@ def fetch_announcements(base_url, token, course_id, client):
             "title": a.get("title") or "Announcement",
             "canvas_url": a.get("html_url") or "",
             "raw_text": body,
+        })
+    return docs
+
+
+def fetch_pdf_documents(base_url, token, course_id, client):
+    files = _get_all(
+        f"{base_url}/api/v1/courses/{course_id}/files",
+        {"per_page": 100}, _headers(token), client,
+    )
+    docs = []
+    for f in files:
+        if f.get("content-type") != "application/pdf":
+            continue
+        download = client.get(f.get("url"), headers=_headers(token))
+        download.raise_for_status()
+        text = extract_pdf_text(download.content)
+        docs.append({
+            "source_type": "file_pdf",
+            "title": f.get("display_name") or "PDF",
+            "canvas_url": f.get("html_url") or "",
+            "raw_text": text,
         })
     return docs
