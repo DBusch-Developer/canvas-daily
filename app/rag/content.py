@@ -87,12 +87,16 @@ def fetch_module_items(base_url, token, course_id, client):
     for module in modules:
         for item in module.get("items") or []:
             title = item.get("title")
-            if not title:
+            html_url = item.get("html_url")
+            # Skip SubHeaders (and any item Canvas gives no link): they carry no
+            # content and only a title, so they surface as linkless, useless
+            # sources and add retrieval noise.
+            if not title or not html_url:
                 continue
             docs.append({
                 "source_type": "module_item",
                 "title": title,
-                "canvas_url": item.get("html_url") or "",
+                "canvas_url": html_url,
                 "raw_text": f"{module.get('name', '')}: {title}".strip(": "),
             })
     return docs
@@ -144,7 +148,9 @@ def fetch_pdf_documents(base_url, token, course_id, client):
         docs.append({
             "source_type": "file_pdf",
             "title": f.get("display_name") or "PDF",
-            "canvas_url": f.get("html_url") or "",
+            # Canvas file objects carry no html_url; build the file page link
+            # from the course + file id so the PDF (the lecture) is clickable.
+            "canvas_url": f"{base_url.rstrip('/')}/courses/{course_id}/files/{f.get('id')}",
             "raw_text": text,
         })
     return docs

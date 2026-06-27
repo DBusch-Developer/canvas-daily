@@ -116,3 +116,25 @@ def test_pdf_download_follows_redirect():
     docs = fetch_pdf_documents(BASE, "tok", 7, client)
     assert len(docs) == 1, f"expected the redirected PDF to be fetched, got {len(docs)}"
     assert docs[0]["title"] == "Lecture.pdf"
+
+
+def test_pdf_canvas_url_is_built_from_file_id():
+    """Canvas file objects have no html_url, so the source link must be built
+    from the course + file id or the PDF (the lecture) renders unclickable."""
+    pdf_bytes = _one_page_pdf_bytes("lecture")
+
+    def handler(request):
+        path = request.url.path
+        if path.endswith("/files"):
+            return httpx.Response(200, json=[
+                {"id": 99, "display_name": "Lecture.pdf",
+                 "content-type": "application/pdf",
+                 "url": f"{BASE}/files/99/download"}])  # note: no html_url field
+        if path.endswith("/files/99/download"):
+            return httpx.Response(200, content=pdf_bytes)
+        return httpx.Response(404, content=b"")
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    docs = fetch_pdf_documents(BASE, "tok", 7, client)
+    assert len(docs) == 1
+    assert docs[0]["canvas_url"] == f"{BASE}/courses/7/files/99"

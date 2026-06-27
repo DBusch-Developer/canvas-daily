@@ -79,6 +79,24 @@ def test_module_items_become_documents():
     assert "Read chapter 1" in docs[0]["raw_text"]
 
 
+def test_module_subheader_without_link_is_skipped():
+    """A module SubHeader has no html_url and no content — it's a structural
+    title that shows up as a linkless, useless source. Skip it; keep real items."""
+    def handler(request):
+        return httpx.Response(200, json=[{
+            "name": "Week 5",
+            "items": [
+                {"title": "Week 5 - Fueling AI", "type": "SubHeader"},  # no html_url
+                {"title": "Read chapter 5", "type": "Page",
+                 "html_url": f"{BASE}/courses/7/modules/items/5"},
+            ],
+        }])
+    docs = fetch_module_items(BASE, "tok", 7, client_for(handler))
+    titles = [d["title"] for d in docs]
+    assert "Read chapter 5" in titles
+    assert "Week 5 - Fueling AI" not in titles
+
+
 def test_announcements_are_sanitized():
     def handler(request):
         assert request.url.params.get("context_codes[]") == "course_7"
