@@ -445,6 +445,18 @@ Green — after adding `answer_question` in `app/rag/answer.py`:
 
 ![Grounded answer tests passing](docs/test-evidence/askcourse-green.png)
 
+**Layer 33 — Ask My Course web flow**
+
+Four routes gated by `ASK_COURSE_ENABLED`: a course picker (`GET /ask`), on-demand content sync (`POST /courses/{id}/sync-content`), and a Q&A page (`GET` / `POST /courses/{id}/ask`). Syncing fetches every Canvas source (syllabus, pages, module items, assignments, announcements, PDFs), sanitizes and chunks the text, and replaces the course's stored documents. Asking retrieves the top chunks via full-text search and calls Groq with only those chunks as context. Four tests run against the Neon test branch: flag off → 404; the picker shows only the signed-in user's courses; syncing then asking renders the grounded answer and the source link; a user cannot ask another user's course.
+
+Red — routes/orchestration/templates don't exist yet:
+
+![Ask My Course web flow tests failing](docs/test-evidence/askcourseweb-red.png)
+
+Green — after wiring sync orchestration, all four routes, and both templates:
+
+![Ask My Course web flow tests passing — four green passes](docs/test-evidence/askcourseweb-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables
