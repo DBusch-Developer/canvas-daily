@@ -397,6 +397,18 @@ Green — after adding `chunk_text`:
 
 ![Chunk tests passing](docs/test-evidence/ragchunk-green.png)
 
+**Layer 29 — fetch a course's text sources**
+
+Four Canvas endpoints (syllabus, pages, module items, announcements) are fetched with an injected httpx client, HTML-sanitized via nh3, and returned as document dicts shaped `{source_type, title, canvas_url, raw_text}`. Pagination follows the `Link` header. Canvas is mocked at the transport boundary — no Neon, no live network.
+
+Red — `app/rag/content.py` doesn't exist yet:
+
+![Course-content fetch tests failing](docs/test-evidence/coursecontent-red.png)
+
+Green — after adding `fetch_syllabus`, `fetch_pages`, `fetch_module_items`, `fetch_announcements`:
+
+![Course-content fetch tests passing](docs/test-evidence/coursecontent-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables
