@@ -421,6 +421,18 @@ Green — after adding `extract_pdf_text` and `fetch_pdf_documents`:
 
 ![PDF-indexing tests passing](docs/test-evidence/pdftext-green.png)
 
+**Layer 31 — course-scoped full-text retrieval**
+
+Three SQLModel tables (`Course`, `CourseDocument`, `DocumentChunk`) store indexed course content. `ensure_search_vector` adds a Postgres generated `tsvector` column and GIN index on `document_chunks` (no-op on non-Postgres). `retrieve(session, course_id, question, k=5)` returns up to `k` chunks ordered by `ts_rank`, always scoped to a single course so one course's content never leaks into another's results. Tests run against the real Neon test branch.
+
+Red — `Course`, `CourseDocument`, `DocumentChunk` not yet in `app.models`, `app.rag.retrieve` missing:
+
+![Course retrieval tests failing](docs/test-evidence/courseretrieval-red.png)
+
+Green — after adding the three tables, `app/rag/fts.py`, and `app/rag/retrieve.py`:
+
+![Course retrieval tests passing](docs/test-evidence/courseretrieval-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

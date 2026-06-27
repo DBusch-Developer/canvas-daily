@@ -6,7 +6,7 @@ that encrypts on write and decrypts on read, so callers only ever see plaintext.
 import re
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Column
+from sqlalchemy import JSON, Column, UniqueConstraint
 from sqlalchemy.types import Text, TypeDecorator
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -121,3 +121,52 @@ class Assignment(SQLModel, table=True):
             return "No due date"
         time_part = d.strftime("%I:%M %p").lstrip("0")
         return f"{d.strftime('%b')} {d.day}, {d.year} · {time_part}"
+
+
+class Course(SQLModel, table=True):
+    __tablename__ = "courses"
+    __table_args__ = (UniqueConstraint("connection_id", "canvas_course_id"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    connection_id: int = Field(foreign_key="connections.id", index=True)
+    canvas_course_id: int
+    name: str
+    last_content_synced_at: datetime | None = None
+
+    documents: list["CourseDocument"] = Relationship(
+        back_populates="course",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
+
+
+class CourseDocument(SQLModel, table=True):
+    __tablename__ = "course_documents"
+
+    id: int | None = Field(default=None, primary_key=True)
+    course_id: int = Field(foreign_key="courses.id", index=True)
+    source_type: str
+    title: str
+    canvas_url: str = ""
+    raw_text: str = ""
+    last_synced_at: datetime = Field(default_factory=_utcnow)
+
+    course: Course | None = Relationship(back_populates="documents")
+    chunks: list["DocumentChunk"] = Relationship(
+        back_populates="document",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
+
+
+class DocumentChunk(SQLModel, table=True):
+    __tablename__ = "document_chunks"
+
+    id: int | None = Field(default=None, primary_key=True)
+    course_id: int = Field(foreign_key="courses.id", index=True)
+    document_id: int = Field(foreign_key="course_documents.id", index=True)
+    chunk_text: str
+    source_title: str = ""
+    source_url: str = ""
+    # search_vector is intentionally Postgres-only and NOT mapped here; it is
+    # added by app.rag.fts.ensure_search_vector and read via raw SQL.
+
+    document: CourseDocument | None = Relationship(back_populates="chunks")
