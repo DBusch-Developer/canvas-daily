@@ -77,3 +77,9 @@ def test_retrieval_is_scoped_to_one_course(session):
 def test_no_match_returns_empty(session):
     bio = _course_with_chunk(session, "Bio2", "Office hours are Tuesdays.")
     assert retrieve(session, bio.id, "quantum chromodynamics") == []
+
+
+def test_empty_question_returns_empty_list(session):
+    """An empty or whitespace-only question must return [] without hitting Postgres."""
+    bio = _course_with_chunk(session, "Bio3", "Office hours are Wednesdays.")
+    assert retrieve(session, bio.id, "   ") == []

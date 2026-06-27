@@ -24,7 +24,7 @@ from app.canvas import verify_token
 from app.dates import group_by_week
 from app.db import make_engine
 from app.models import Assignment, Connection, Course, User
-from app.rag.answer import answer_question
+from app.rag.answer import REFUSAL, answer_question
 from app.rag.retrieve import retrieve
 from app.reports import excuse_assignment, report_for_user
 from app.sync import sync_connection
@@ -409,7 +409,7 @@ def create_app():
             return TEMPLATES.TemplateResponse(
                 request, "course_chat.html",
                 {"course": course, "question": "",
-                 "answer": "I don't know based on the provided course documents.",
+                 "answer": REFUSAL,
                  "sources": []},
             )
         chunks = retrieve(session, course.id, question, k=5)

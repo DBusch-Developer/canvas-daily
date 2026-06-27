@@ -6,7 +6,12 @@ Canvas is mocked at the httpx boundary in tests; the client is injected and the
 token is never logged.
 """
 
+import logging
+
+import httpx
 import nh3
+
+logger = logging.getLogger(__name__)
 
 from app.canvas import _next_page
 from app.rag.pdf import extract_pdf_text
@@ -122,9 +127,17 @@ def fetch_pdf_documents(base_url, token, course_id, client):
     for f in files:
         if f.get("content-type") != "application/pdf":
             continue
-        download = client.get(f.get("url"), headers=_headers(token))
-        download.raise_for_status()
-        text = extract_pdf_text(download.content)
+        try:
+            download = client.get(f.get("url"), headers=_headers(token))
+            download.raise_for_status()
+            text = extract_pdf_text(download.content)
+        except httpx.HTTPStatusError as exc:
+            logger.warning("PDF download failed (%s): %s", exc.response.status_code,
+                           f.get("display_name") or "unknown")
+            continue
+        except Exception:
+            logger.warning("PDF extract failed: %s", f.get("display_name") or "unknown")
+            continue
         docs.append({
             "source_type": "file_pdf",
             "title": f.get("display_name") or "PDF",

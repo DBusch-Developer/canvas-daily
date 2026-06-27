@@ -20,6 +20,10 @@ _SQL = text(
 
 
 def retrieve(session, course_id, question, k=5):
+    if not question.strip():
+        return []
+    # ts_rank scores with the AND-form query (plainto_tsquery); the WHERE clause
+    # matches with the OR-form so partial hits still surface.
     rows = session.execute(
         _SQL, {"q": question, "cid": course_id, "k": k}
     ).all()

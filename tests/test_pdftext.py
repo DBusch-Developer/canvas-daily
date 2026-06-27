@@ -61,3 +61,32 @@ def test_only_pdfs_are_downloaded_and_become_documents():
     assert docs[0]["source_type"] == "file_pdf"
     assert docs[0]["title"] == "Syllabus.pdf"
     assert docs[0]["canvas_url"] == f"{BASE}/courses/7/files/1"
+
+
+def test_one_bad_pdf_does_not_abort_rest():
+    """A 403 on the first PDF must not abort the second valid PDF."""
+    pdf_bytes = _one_page_pdf_bytes("valid content")
+
+    def handler(request):
+        path = request.url.path
+        if path.endswith("/files"):
+            return httpx.Response(200, json=[
+                {"id": 1, "display_name": "Bad.pdf",
+                 "content-type": "application/pdf",
+                 "url": f"{BASE}/files/1/download",
+                 "html_url": f"{BASE}/courses/7/files/1"},
+                {"id": 2, "display_name": "Good.pdf",
+                 "content-type": "application/pdf",
+                 "url": f"{BASE}/files/2/download",
+                 "html_url": f"{BASE}/courses/7/files/2"},
+            ])
+        if path.endswith("/files/1/download"):
+            return httpx.Response(403, content=b"Forbidden")
+        if path.endswith("/files/2/download"):
+            return httpx.Response(200, content=pdf_bytes)
+        return httpx.Response(404, content=b"")
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    docs = fetch_pdf_documents(BASE, "tok", 7, client)
+    assert len(docs) == 1, f"expected 1 doc (the valid PDF), got {len(docs)}"
+    assert docs[0]["title"] == "Good.pdf"

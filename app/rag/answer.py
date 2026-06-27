@@ -59,9 +59,9 @@ def answer_question(question, chunks, client):
             {"role": "user", "content": user_prompt},
         ],
     }
-    headers = {"Authorization": f"Bearer {os.environ['GROQ_API_KEY']}"}
 
     try:
+        headers = {"Authorization": f"Bearer {os.environ.get('GROQ_API_KEY', '')}"}
         resp = client.post(GROQ_URL, json=payload, headers=headers, timeout=30)
         resp.raise_for_status()
     except httpx.TimeoutException:

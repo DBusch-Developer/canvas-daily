@@ -68,3 +68,17 @@ def test_no_chunks_short_circuits_to_refusal(monkeypatch):
     result = answer_question("anything", [], client)
     assert result["answer"] == "I don't know based on the provided course documents."
     assert result["sources"] == []
+
+
+def test_missing_groq_key_returns_dict_not_raises(monkeypatch):
+    """A missing GROQ_API_KEY must not raise KeyError; it must return a clean error dict."""
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+
+    def handler(request):
+        return httpx.Response(200, json={
+            "choices": [{"message": {"content": "answer text"}}],
+        })
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    result = answer_question("What is the late policy?", CHUNKS, client)
+    assert isinstance(result, dict), "must return a dict, not raise"

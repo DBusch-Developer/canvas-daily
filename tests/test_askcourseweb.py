@@ -215,6 +215,35 @@ def test_sync_then_ask_renders_answer_with_sources(engine, monkeypatch):
     assert f"/courses/{CANVAS_COURSE_ID}/assignments/syllabus" in body
 
 
+def test_empty_question_returns_refusal_without_calling_groq(engine, monkeypatch):
+    """POST with whitespace-only question returns the refusal and does not call Groq.
+    Coverage backfill for already-shipped guard; expected to pass on first run."""
+    monkeypatch.setenv("ASK_COURSE_ENABLED", "1")
+    monkeypatch.setenv("GROQ_API_KEY", "test-groq-key")
+
+    groq_called = []
+
+    def recording_groq_handler(request):
+        groq_called.append(True)
+        return httpx.Response(200, json={
+            "choices": [{"message": {"content": "should not appear"}}],
+        })
+
+    app = _make_app(engine, canvas_handler=_canvas_noop,
+                    groq_handler=recording_groq_handler)
+    client = TestClient(app)
+
+    _signup(client, "emptyq@x.com")
+    course_id = _seed_course(engine, "emptyq@x.com", "Empty Q Course")
+
+    resp = client.post(f"/courses/{course_id}/ask", data={"question": "   "})
+    assert resp.status_code == 200
+    import html as _html
+    from app.rag.answer import REFUSAL
+    assert REFUSAL in _html.unescape(resp.text), "refusal text must appear in the response"
+    assert groq_called == [], "Groq must not be called for an empty question"
+
+
 def test_ownership_enforced_on_course_routes(engine, monkeypatch):
     """Owner A reaches GET /courses/{id}/ask (200 — genuine red); intruder B
     gets 404 on all three course-scoped routes."""
