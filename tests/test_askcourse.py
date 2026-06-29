@@ -5,6 +5,8 @@ the sources are the distinct documents behind them, a timeout becomes a clean
 error (not a crash), and the GROQ key never appears in the request log.
 """
 
+import json
+
 import httpx
 
 from app.rag.answer import answer_question
@@ -46,6 +48,51 @@ def test_answer_uses_chunks_and_returns_distinct_sources(monkeypatch):
     # The chunk text is in the prompt; the key is only in the header, not logged.
     assert "Late work loses 10%" in capture["body"]
     assert "secret-key" not in capture["body"]
+
+
+def test_answer_returns_only_the_cited_source(monkeypatch):
+    """The answer lists only the document(s) it actually drew from — still as
+    Canvas links. The model answers from the Syllabus (passage 1) and cites it;
+    the Final Project (passage 3) was retrieved but unused, so it is dropped."""
+    monkeypatch.setenv("GROQ_API_KEY", "secret-key")
+    client = groq_client(json.dumps(
+        {"answer": "Late work loses 10% per day.", "used": [1]}))
+
+    result = answer_question("What is the late policy?", CHUNKS, client)
+
+    assert "10%" in result["answer"]
+    assert result["sources"] == [
+        {"title": "Syllabus", "url": "https://s.test/courses/7/assignments/syllabus"},
+    ]
+
+
+def test_answer_ignores_out_of_range_citations(monkeypatch):
+    """A cited number that isn't one of the provided passages is ignored — the
+    answer can never surface a source that wasn't retrieved."""
+    monkeypatch.setenv("GROQ_API_KEY", "secret-key")
+    client = groq_client(json.dumps(
+        {"answer": "Late work loses 10% per day.", "used": [1, 99]}))
+
+    result = answer_question("What is the late policy?", CHUNKS, client)
+
+    assert result["sources"] == [
+        {"title": "Syllabus", "url": "https://s.test/courses/7/assignments/syllabus"},
+    ]
+
+
+def test_unparseable_reply_falls_back_to_all_sources(monkeypatch):
+    """If the model returns plain text instead of the JSON object, show every
+    retrieved document (today's behavior) rather than nothing."""
+    monkeypatch.setenv("GROQ_API_KEY", "secret-key")
+    client = groq_client("Late work loses 10% per day.")  # not JSON
+
+    result = answer_question("What is the late policy?", CHUNKS, client)
+
+    assert "10%" in result["answer"]
+    assert result["sources"] == [
+        {"title": "Syllabus", "url": "https://s.test/courses/7/assignments/syllabus"},
+        {"title": "Final Project", "url": "https://s.test/courses/7/assignments/3"},
+    ]
 
 
 def test_timeout_returns_clean_error(monkeypatch):

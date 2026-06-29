@@ -6,6 +6,7 @@ fixed refusal line. Failures become clean messages, never a broken page. The key
 rides in the Authorization header and is never logged.
 """
 
+import json
 import logging
 import os
 
@@ -19,9 +20,12 @@ TEMPERATURE = 0.1
 REFUSAL = "I don't know based on the provided course documents."
 
 SYSTEM_PROMPT = (
-    "You answer a student's question using ONLY the provided course documents. "
-    "If the answer is not in them, reply with exactly this and nothing else:\n"
-    f"{REFUSAL}\n"
+    "You answer a student's question using ONLY the provided numbered course "
+    "documents. Respond with a single JSON object and nothing else, with two keys:\n"
+    '  "answer": your answer, drawn only from the documents. If the answer is not in '
+    f'them, set this to exactly: "{REFUSAL}"\n'
+    '  "used": a JSON array of the document numbers you actually drew the answer '
+    "from (empty if you could not answer). Cite a number only if you used it.\n"
     "Never invent citations, source titles, or URLs. Be concise and direct."
 )
 
@@ -36,9 +40,30 @@ def _distinct_sources(chunks):
     return sources
 
 
+def _cited_sources(chunks, used):
+    """Distinct sources for the passage numbers (1-based) the model actually used.
+
+    Out-of-range or non-integer entries are ignored, so the answer can never
+    surface a document that was not among the retrieved passages.
+    """
+    seen, sources = set(), []
+    for n in used if isinstance(used, list) else []:
+        if isinstance(n, bool) or not isinstance(n, int):
+            continue
+        if not 1 <= n <= len(chunks):
+            continue
+        c = chunks[n - 1]
+        key = (c["source_title"], c["source_url"])
+        if key not in seen:
+            seen.add(key)
+            sources.append({"title": c["source_title"], "url": c["source_url"]})
+    return sources
+
+
 def _context(chunks):
     return "\n\n".join(
-        f"[{c['source_title']}]\n{c['chunk_text']}" for c in chunks
+        f"[{i}] {c['source_title']}\n{c['chunk_text']}"
+        for i, c in enumerate(chunks, 1)
     )
 
 
@@ -54,6 +79,7 @@ def answer_question(question, chunks, client):
     payload = {
         "model": GROQ_MODEL,
         "temperature": TEMPERATURE,
+        "response_format": {"type": "json_object"},
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
@@ -72,5 +98,12 @@ def answer_question(question, chunks, client):
         return {"answer": "Something went wrong generating the answer. Please try again.",
                 "sources": sources, "error": "failed"}
 
-    answer = resp.json()["choices"][0]["message"]["content"].strip()
-    return {"answer": answer, "sources": sources}
+    content = resp.json()["choices"][0]["message"]["content"].strip()
+    try:
+        data = json.loads(content)
+        answer = str(data["answer"]).strip()
+    except (ValueError, TypeError, KeyError):
+        # Model didn't return the expected JSON — show the raw reply and every
+        # retrieved document rather than dropping sources entirely.
+        return {"answer": content, "sources": sources}
+    return {"answer": answer, "sources": _cited_sources(chunks, data.get("used"))}
