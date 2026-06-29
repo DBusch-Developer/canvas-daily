@@ -557,9 +557,14 @@ def create_app():
             )
         chunks = retrieve(session, course.id, question, k=5)
         result = answer_question(question, chunks, client)
+        connection = session.get(Connection, course.connection_id)
+        course_url = (f"{connection.base_url.rstrip('/')}"
+                      f"/courses/{course.canvas_course_id}")
         return TEMPLATES.TemplateResponse(request, "course_chat.html",
                                           {"course": course, "question": question,
                                            "answer": result["answer"],
-                                           "sources": result["sources"]})
+                                           "sources": result["sources"],
+                                           "refused": result["answer"] == REFUSAL,
+                                           "course_url": course_url})
 
     return app

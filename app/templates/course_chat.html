@@ -17,7 +17,16 @@
 <section class="answer">
   <h2>Answer</h2>
   <p>{{ answer }}</p>
-  {% if sources %}
+  {% if refused %}
+  <h3>Where you might look</h3>
+  <ul>
+    {% for s in sources %}
+      <li>{% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener">{{ s.title }}</a>{% else %}{{ s.title }}{% endif %}</li>
+    {% endfor %}
+    {% if course_url %}<li><a href="{{ course_url }}" target="_blank" rel="noopener">Browse the whole course in Canvas ↗</a></li>{% endif %}
+  </ul>
+  <p class="muted">Still stuck? Ask your instructor.</p>
+  {% elif sources %}
   <h3>Sources</h3>
   <ul>
     {% for s in sources %}

@@ -106,4 +106,8 @@ def answer_question(question, chunks, client):
         # Model didn't return the expected JSON — show the raw reply and every
         # retrieved document rather than dropping sources entirely.
         return {"answer": content, "sources": sources}
+    if answer == REFUSAL:
+        # The answer isn't in the documents — surface the closest materials as
+        # "where to look" recommendations instead of a dead end with no sources.
+        return {"answer": REFUSAL, "sources": sources}
     return {"answer": answer, "sources": _cited_sources(chunks, data.get("used"))}

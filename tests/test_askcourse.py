@@ -9,7 +9,7 @@ import json
 
 import httpx
 
-from app.rag.answer import answer_question
+from app.rag.answer import answer_question, REFUSAL
 
 CHUNKS = [
     {"chunk_text": "Late work loses 10% per day.", "source_title": "Syllabus",
@@ -89,6 +89,22 @@ def test_unparseable_reply_falls_back_to_all_sources(monkeypatch):
     result = answer_question("What is the late policy?", CHUNKS, client)
 
     assert "10%" in result["answer"]
+    assert result["sources"] == [
+        {"title": "Syllabus", "url": "https://s.test/courses/7/assignments/syllabus"},
+        {"title": "Final Project", "url": "https://s.test/courses/7/assignments/3"},
+    ]
+
+
+def test_refusal_recommends_closest_materials(monkeypatch):
+    """When the answer isn't in the documents, the result still surfaces the
+    closest retrieved materials so the page can recommend where to look —
+    instead of a dead end with no sources."""
+    monkeypatch.setenv("GROQ_API_KEY", "secret-key")
+    client = groq_client(json.dumps({"answer": REFUSAL, "used": []}))
+
+    result = answer_question("When are office hours?", CHUNKS, client)
+
+    assert result["answer"] == REFUSAL
     assert result["sources"] == [
         {"title": "Syllabus", "url": "https://s.test/courses/7/assignments/syllabus"},
         {"title": "Final Project", "url": "https://s.test/courses/7/assignments/3"},

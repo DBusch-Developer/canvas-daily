@@ -222,6 +222,47 @@ def test_sync_then_ask_renders_answer_with_sources(engine, monkeypatch):
     assert 'rel="noopener"' in body
 
 
+def test_refusal_recommends_where_to_look(engine, monkeypatch):
+    """When the model can't answer from the materials, the page recommends where
+    to look: the closest documents, a link to browse the whole course in Canvas,
+    and a tip to ask the instructor — not an empty dead end."""
+    import json as _json
+    import html as _html
+    from app.rag.answer import REFUSAL
+
+    monkeypatch.setenv("ASK_COURSE_ENABLED", "1")
+    monkeypatch.setenv("GROQ_API_KEY", "test-groq-key")
+
+    def groq_handler(request):
+        return httpx.Response(200, json={
+            "choices": [{"message": {
+                "content": _json.dumps({"answer": REFUSAL, "used": []})
+            }}],
+        })
+
+    app = _make_app(engine,
+                    canvas_handler=_canvas_with_syllabus,
+                    groq_handler=groq_handler)
+    client = TestClient(app)
+
+    _signup(client, "refuse@x.com")
+    course_id = _seed_course(engine, "refuse@x.com", "Refuse Course")
+    client.post(f"/courses/{course_id}/sync-content", follow_redirects=False)
+
+    # A question that retrieves the syllabus chunk (so there's a closest
+    # material), but the model is mocked to refuse — exercising the refusal page.
+    resp = client.post(f"/courses/{course_id}/ask",
+                       data={"question": "late work"})
+    assert resp.status_code == 200
+    body = resp.text
+    assert REFUSAL in _html.unescape(body)
+    # The "where to look" recommendations: heading, closest material, browse link.
+    assert "Where you might look" in body
+    assert f"/courses/{CANVAS_COURSE_ID}/assignments/syllabus" in body
+    assert "Browse the whole course" in body
+    assert f"{BASE}/courses/{CANVAS_COURSE_ID}" in body
+
+
 def test_empty_question_returns_refusal_without_calling_groq(engine, monkeypatch):
     """POST with whitespace-only question returns the refusal and does not call Groq.
     Coverage backfill for already-shipped guard; expected to pass on first run."""
