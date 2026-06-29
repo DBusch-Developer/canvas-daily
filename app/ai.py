@@ -213,6 +213,64 @@ def generate_bullets(assignment, client, api_key):
     return {key: _as_bullets(data.get(key)) for key in SECTION_KEYS}
 
 
+CLASSIFY_SYSTEM_PROMPT = (
+    "You decide which Canvas courses are real academic classes a student takes "
+    "for a grade, versus extras Canvas exposes that are not real classes — clubs, "
+    "honor societies, help desks, lunch/social spaces, orientations, and parent or "
+    "student centers.\n"
+    "You are given a numbered list of courses, each with its name and whether it "
+    "currently has any graded assignments. Judge primarily from the name; the "
+    "assignment signal is secondary.\n"
+    "Respond with a single JSON array of booleans and nothing else — exactly one "
+    "entry per course, in the same order: true if it is a real class, false if it "
+    "is an extra."
+)
+
+
+def build_classify_messages(courses):
+    """A numbered course list (name + assignment signal) for classification."""
+    lines = []
+    for i, c in enumerate(courses):
+        has = "yes" if c.get("has_assignments") else "no"
+        lines.append(f"{i}. {c.get('name', '')} (has assignments: {has})")
+    return [
+        {"role": "system", "content": CLASSIFY_SYSTEM_PROMPT},
+        {"role": "user", "content": "\n".join(lines)},
+    ]
+
+
+def classify_courses(courses, client, api_key):
+    """Return a parallel list of is_real booleans for each course.
+
+    `courses` is a list of {"name", "has_assignments"}. Raises AIError /
+    AITimeoutError on failure or a malformed response so the caller can fall
+    back to showing everything.
+    """
+    if not courses:
+        return []
+    content = _request_completion(client, api_key, {
+        "model": GROQ_MODEL,
+        "temperature": TEMPERATURE,
+        "response_format": {"type": "json_object"},
+        "messages": build_classify_messages(courses),
+    })
+    try:
+        data = json.loads(content)
+        # Accept a bare array, or an object wrapping one (json_object mode).
+        if isinstance(data, dict):
+            for value in data.values():
+                if isinstance(value, list):
+                    data = value
+                    break
+        if (not isinstance(data, list) or len(data) != len(courses)
+                or not all(isinstance(x, bool) for x in data)):
+            raise ValueError("expected a JSON array of booleans, one per course")
+    except (ValueError, TypeError) as exc:
+        logger.warning("Course classification returned invalid JSON")
+        raise AIError("Course classification could not be completed.") from exc
+    return data
+
+
 class BreakdownRequest(BaseModel):
     title: str | None = None
     description: str | None = None

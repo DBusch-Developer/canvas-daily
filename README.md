@@ -505,6 +505,18 @@ Green — after adding the route and the per-account Sync now button:
 
 ![Sync-now tests passing — 4 green passes](docs/test-evidence/connsync-green.png)
 
+**Layer 38 — AI course classifier**
+
+The Ask My Course picker needs to tell real classes apart from the extras Canvas exposes — clubs, help desks, lunch/social spaces, orientations, parent and student centers. `classify_courses` sends each course's name and whether it has graded assignments to Groq and gets back one boolean per course (true = a real class). The model judges primarily from the name. A timeout, any other error, or a malformed response (wrong length, non-boolean) raises a clean `AIError`/`AITimeoutError` so the picker can fall back to showing everything — never a broken page — and the API key never leaves the Authorization header. Groq is mocked at the httpx transport boundary; no key required.
+
+Red — `classify_courses` does not exist yet, so the whole module fails to import:
+
+![Course classifier tests failing — import error](docs/test-evidence/courseclassify-red.png)
+
+Green — after adding `classify_courses` with its JSON-array parsing and clean failure handling:
+
+![Course classifier tests passing — 5 green passes](docs/test-evidence/courseclassify-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables
