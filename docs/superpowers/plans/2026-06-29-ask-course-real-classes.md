@@ -419,10 +419,14 @@ git add tools/migrate_add_course_visibility.py
 git commit -m "Migration: add courses.hidden and courses.has_assignments"
 ```
 
-> The migration is **run against Neon by Diana** (or with her go-ahead) after the
-> feature merges — `python tools/migrate_add_course_visibility.py` with
-> `DATABASE_URL` pointed at Neon. Local SQLite tests get the columns from the model
-> via `create_all`, so the suite does not need the migration.
+> **Deploy ordering — migrate Neon FIRST, then push/deploy.** The new model code
+> makes every `select(Course)` name `hidden`/`has_assignments` explicitly, so if the
+> columns are missing when the code goes live, every Course-touching path 500s —
+> including the daily email cron. The migration is additive + nullable, so the
+> currently-live (old) code ignores the new columns. Safe sequence: run
+> `python tools/migrate_add_course_visibility.py` (`DATABASE_URL` → Neon) **before**
+> pushing this branch, confirm the columns exist, then push. Local SQLite tests get
+> the columns from the model via `create_all`, so the suite does not need the migration.
 
 ---
 
@@ -808,18 +812,19 @@ Expected: all pass (existing + the new layers).
 Run: `.venv\Scripts\python.exe tools/check_evidence.py`
 Expected: OK — lists `courseclassify` and `askpicker` among documented layers.
 
-- [ ] **Step 3: Push**
-
-```bash
-git push
-```
-
-- [ ] **Step 4: After deploy, Diana runs the migration against Neon** and confirms the picker live:
+- [ ] **Step 3: Migrate Neon FIRST** (before pushing — see deploy-ordering note under Task 4):
 
 ```bash
 python tools/migrate_add_course_visibility.py   # DATABASE_URL → Neon
 ```
-Verify the deploy landed (public asset marker) and the `/ask` picker shows the dropdown + hidden section.
+Confirm the `courses.hidden` and `courses.has_assignments` columns exist before continuing.
+
+- [ ] **Step 4: Push** (triggers the Render deploy, which now finds the columns):
+
+```bash
+git push
+```
+Then verify the deploy landed (public asset marker) and the `/ask` picker shows the dropdown + hidden section. Kicking a sync for one connection afterward refreshes `has_assignments` so the classifier's secondary signal reflects reality.
 
 ---
 

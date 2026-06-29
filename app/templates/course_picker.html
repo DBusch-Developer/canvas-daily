@@ -23,7 +23,7 @@
   {% endfor %}
 </ul>
 {% else %}
-<p>No classes here yet. Add a Canvas connection and run a sync first.</p>
+<p>No classes to show for this account{% if hidden %} — everything here is under Hidden courses below{% endif %}.</p>
 {% endif %}
 
 {% if hidden %}
