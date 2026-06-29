@@ -3,14 +3,14 @@
 <p><a class="back-link" href="/ask">← All courses</a></p>
 <h1>{{ course.name }}</h1>
 <form method="post" action="/courses/{{ course.id }}/sync-content">
-  <button class="btn btn--ghost" type="submit">Sync course content</button>
+  <button class="btn btn--primary" type="submit">Sync course content</button>
 </form>
 {% include "_sync_notice.html" %}
 
 <form method="post" action="/courses/{{ course.id }}/ask">
   <input type="text" name="question" maxlength="500"
          placeholder="Ask about this course…" required>
-  <button class="btn" type="submit">Ask</button>
+  <button class="btn btn--primary" type="submit">Ask</button>
 </form>
 
 {% if answer %}

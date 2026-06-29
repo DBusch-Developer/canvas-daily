@@ -321,6 +321,20 @@ def create_app():
         session.commit()
         return RedirectResponse("/connections", status_code=303)
 
+    @app.post("/connections/{connection_id}/sync")
+    def sync_connection_now(request: Request, connection_id: int,
+                            background_tasks: BackgroundTasks,
+                            session: Session = Depends(get_session),
+                            engine=Depends(get_engine),
+                            client_factory=Depends(get_canvas_client_factory)):
+        user = _current_user(request, session)
+        if user is None:
+            return RedirectResponse("/login", status_code=303)
+        connection = _owned_connection_or_404(session, connection_id, user)
+        background_tasks.add_task(
+            run_connection_sync, engine, connection.id, client_factory)
+        return RedirectResponse("/connections", status_code=303)
+
     @app.get("/connections/{connection_id}/setup")
     def connection_setup(request: Request, connection_id: int,
                          session: Session = Depends(get_session)):

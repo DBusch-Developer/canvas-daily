@@ -36,10 +36,15 @@
           {% if not c.last_synced_at %}
             <p class="field__hint">We couldn't pull assignments yet — they'll appear after the next daily sync.</p>
           {% endif %}
-          <form method="post" action="/connections/{{ c.id }}/delete"
-                onsubmit="return confirm('Remove this account and its assignments?');">
-            <button class="btn btn--ghost btn--sm" type="submit">Remove</button>
-          </form>
+          <div class="card__actions">
+            <form method="post" action="/connections/{{ c.id }}/sync">
+              <button class="btn btn--primary" type="submit">Sync now</button>
+            </form>
+            <form method="post" action="/connections/{{ c.id }}/delete"
+                  onsubmit="return confirm('Remove this account and its assignments?');">
+              <button class="btn btn--ghost btn--sm" type="submit">Remove</button>
+            </form>
+          </div>
         </li>
       {% endfor %}
     </ul>

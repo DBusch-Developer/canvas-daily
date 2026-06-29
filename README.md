@@ -493,6 +493,18 @@ Green — after adding the status endpoint, the partial with polling + dots, the
 
 ![Live sync notice tests passing — 5 green passes](docs/test-evidence/synclive-green.png)
 
+**Layer 37 — manual "Sync now" per account**
+
+Each account on the accounts page gets a Sync now button that triggers an on-demand pull for that one connection, instead of waiting for the daily job. A new `POST /connections/{id}/sync` route schedules `run_connection_sync` in a FastAPI `BackgroundTask` — the same background pull used when a connection is first added — then 303-redirects back to `/connections`. It is login-guarded (anonymous POST is bounced to `/login`) and ownership-guarded (a user gets a 404 trying to sync someone else's connection). Tested with in-memory SQLite, StaticPool, and a mocked Canvas client; no Neon required.
+
+Red — the `/connections/{id}/sync` route does not exist, so the owner's POST 404s and no background sync runs:
+
+![Sync-now tests failing — 4 red failures](docs/test-evidence/connsync-red.png)
+
+Green — after adding the route and the per-account Sync now button:
+
+![Sync-now tests passing — 4 green passes](docs/test-evidence/connsync-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables
