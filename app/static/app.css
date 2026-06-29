@@ -606,6 +606,11 @@ input:focus, select:focus {
 
 .field__hint { font-size: .8rem; color: var(--muted); }
 
+/* Ask My Course: keep the question box and Ask button from sitting on top of
+   each other — full-width input, button on its own line below with breathing room. */
+.ask-form { display: grid; gap: .7rem; justify-items: start; margin: 1rem 0; }
+.ask-form .btn { width: auto; }
+
 .error {
   color: var(--past-fg);
   background: var(--past-bg);

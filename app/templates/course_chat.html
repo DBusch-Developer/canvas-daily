@@ -7,7 +7,7 @@
 </form>
 {% include "_sync_notice.html" %}
 
-<form method="post" action="/courses/{{ course.id }}/ask">
+<form class="ask-form" method="post" action="/courses/{{ course.id }}/ask">
   <input type="text" name="question" maxlength="500"
          placeholder="Ask about this course…" required>
   <button class="btn btn--primary" type="submit">Ask</button>
