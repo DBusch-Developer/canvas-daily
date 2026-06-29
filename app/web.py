@@ -18,7 +18,8 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 from starlette.middleware.sessions import SessionMiddleware
 
-from app.ai import AIError, AITimeoutError, generate_bullets
+from app.ai import (AIError, AITimeoutError, classify_courses, generate_bullets,
+                    get_api_key)
 from app.auth import hash_password, verify_password
 from app.canvas import verify_token
 from app.dates import group_by_week
@@ -422,18 +423,72 @@ def create_app():
             request, template, {"a": assignment, "sections": sections})
 
     @app.get("/ask")
-    def ask_picker(request: Request, session: Session = Depends(get_session)):
+    def ask_picker(request: Request, account: int | None = None,
+                   session: Session = Depends(get_session),
+                   client: httpx.Client = Depends(get_groq_client),
+                   api_key: str = Depends(get_api_key)):
         if not _ask_course_enabled():
             raise HTTPException(status_code=404)
         user = _current_user(request, session)
         if user is None:
             return RedirectResponse("/login", status_code=303)
-        courses = session.exec(
+
+        connections = session.exec(
+            select(Connection).where(Connection.user_id == user.id)
+            .order_by(Connection.id)
+        ).all()
+
+        all_courses = session.exec(
             select(Course).join(Connection, Course.connection_id == Connection.id)
             .where(Connection.user_id == user.id)
         ).all()
-        return TEMPLATES.TemplateResponse(request, "course_picker.html",
-                                          {"courses": courses})
+
+        # Classify any undecided courses once; show-all on AI failure (stay NULL).
+        undecided = [c for c in all_courses if c.hidden is None]
+        if undecided:
+            try:
+                verdicts = classify_courses(
+                    [{"name": c.name, "has_assignments": c.has_assignments}
+                     for c in undecided],
+                    client, api_key,
+                )
+                for course, is_real in zip(undecided, verdicts):
+                    course.hidden = not is_real
+                    session.add(course)
+                session.commit()
+            except AIError:
+                pass  # leave undecided NULL → treated as shown below
+
+        # Selected account: requested (if owned) else the first connection.
+        owned_ids = {c.id for c in connections}
+        selected_id = account if account in owned_ids else (
+            connections[0].id if connections else None)
+
+        account_courses = [c for c in all_courses if c.connection_id == selected_id]
+        shown = [c for c in account_courses if not c.hidden]      # NULL or False
+        hidden = [c for c in account_courses if c.hidden]         # True
+
+        return TEMPLATES.TemplateResponse(request, "course_picker.html", {
+            "connections": connections,
+            "selected_id": selected_id,
+            "shown": shown,
+            "hidden": hidden,
+        })
+
+    @app.post("/courses/{course_id}/show")
+    def course_show(request: Request, course_id: int,
+                    session: Session = Depends(get_session)):
+        if not _ask_course_enabled():
+            raise HTTPException(status_code=404)
+        user = _current_user(request, session)
+        if user is None:
+            return RedirectResponse("/login", status_code=303)
+        course = _owned_course_or_404(session, course_id, user)
+        course.hidden = False
+        session.add(course)
+        session.commit()
+        return RedirectResponse(f"/ask?account={course.connection_id}",
+                                status_code=303)
 
     @app.post("/courses/{course_id}/sync-content")
     def sync_content(request: Request, course_id: int,

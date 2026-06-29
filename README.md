@@ -517,6 +517,18 @@ Green — after adding `classify_courses` with its JSON-array parsing and clean 
 
 ![Course classifier tests passing — 6 green passes](docs/test-evidence/courseclassify-green.png)
 
+**Layer 39 — Ask My Course picker: real classes + account selector**
+
+The picker now serves only real classes. On load it runs the Layer 38 classifier over any not-yet-decided courses (one batched Groq call, mocked here), splitting each account's courses into a shown list and a collapsible "Hidden courses" disclosure for the Canvas extras. An account dropdown selects one connection at a time, so the same class across duplicate accounts no longer blurs together. A `POST /courses/{id}/show` action pulls any hidden course back into the shown list — login- and ownership-guarded. If the classifier times out or errors, the page falls back to showing everything (undecided courses stay NULL), never a broken or empty page. In-memory SQLite + mocked Canvas/Groq; no Neon required.
+
+Red — the route ignores the account, renders no hidden disclosure or dropdown, and `/courses/{id}/show` does not exist (404 instead of redirect):
+
+![Ask picker tests failing — 4 red failures](docs/test-evidence/askpicker-red.png)
+
+Green — after the account-grouped picker, classify-on-load with show-all fallback, the hidden disclosure, and the Show route:
+
+![Ask picker tests passing — 5 green passes](docs/test-evidence/askpicker-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

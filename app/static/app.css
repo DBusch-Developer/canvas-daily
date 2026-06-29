@@ -611,6 +611,13 @@ input:focus, select:focus {
 .ask-form { display: grid; gap: .7rem; justify-items: start; margin: 1rem 0; }
 .ask-form .btn { width: auto; }
 
+/* Ask My Course picker: account selector + hidden-courses disclosure. */
+.account-picker { display: grid; gap: .35rem; justify-items: start; margin: 0 0 1.2rem; max-width: 28rem; }
+.hidden-courses { margin-top: 1.5rem; }
+.hidden-courses summary { cursor: pointer; font-weight: 600; color: var(--muted); }
+.course-list--hidden li { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.course-list--hidden form { margin: 0; }
+
 .error {
   color: var(--past-fg);
   background: var(--past-bg);

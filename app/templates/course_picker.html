@@ -1,13 +1,45 @@
 {% extends "base.html" %}
 {% block body %}
 <h1>Ask my course</h1>
-{% if not courses %}
-  <p>No courses yet. Add a Canvas connection and run a sync first.</p>
+
+{% if not connections %}
+  <p>No accounts yet. Add a Canvas connection and run a sync first.</p>
 {% else %}
+<form class="account-picker" method="get" action="/ask">
+  <label for="account">Account</label>
+  <select id="account" name="account" onchange="this.form.submit()">
+    {% for c in connections %}
+      <option value="{{ c.id }}" {% if c.id == selected_id %}selected{% endif %}>
+        {{ c.label }} — {{ c.base_url }}
+      </option>
+    {% endfor %}
+  </select>
+</form>
+
+{% if shown %}
 <ul class="course-list">
-  {% for c in courses %}
+  {% for c in shown %}
     <li><a href="/courses/{{ c.id }}/ask">{{ c.name }}</a></li>
   {% endfor %}
 </ul>
+{% else %}
+<p>No classes here yet. Add a Canvas connection and run a sync first.</p>
+{% endif %}
+
+{% if hidden %}
+<details class="hidden-courses">
+  <summary>Hidden courses ({{ hidden|length }})</summary>
+  <ul class="course-list course-list--hidden">
+    {% for c in hidden %}
+      <li>
+        <span>{{ c.name }}</span>
+        <form method="post" action="/courses/{{ c.id }}/show">
+          <button class="btn btn--ghost btn--sm" type="submit">Show</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}
 {% endif %}
 {% endblock %}
