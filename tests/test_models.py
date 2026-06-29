@@ -165,3 +165,10 @@ def test_report_groups_by_status_and_sorts_by_due_date(session):
     assert [a.name for a in report["past_due"]] == ["Past-older", "Past-newer"]
     assert [a.name for a in report["due_today"]] == ["Today"]
     assert [a.name for a in report["upcoming"]] == ["Soon", "Later"]
+
+
+def test_course_visibility_fields_default():
+    from app.models import Course
+    c = Course(connection_id=1, canvas_course_id=99, name="X")
+    assert c.hidden is None          # undecided until classified
+    assert c.has_assignments is False

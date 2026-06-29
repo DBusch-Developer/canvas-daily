@@ -132,6 +132,13 @@ class Course(SQLModel, table=True):
     canvas_course_id: int
     name: str
     last_content_synced_at: datetime | None = None
+    # Ask My Course visibility: NULL = not yet classified, False = shown
+    # (real class), True = hidden (Canvas extra). Set by the AI classifier or
+    # the user's Show action; user choices stick across re-syncs.
+    hidden: bool | None = None
+    # Whether the course had any assignments at last sync — a signal the AI
+    # classifier uses alongside the name.
+    has_assignments: bool = False
 
     documents: list["CourseDocument"] = Relationship(
         back_populates="course",
