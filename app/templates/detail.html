@@ -33,7 +33,7 @@
       {# No AI breakdown for quizzes — there's nothing to break down. #}
       {% if not a.is_quiz %}
         <form method="post" action="/assignments/{{ a.id }}/breakdown">
-          <button class="btn btn--accent" type="submit"
+          <button class="btn btn--primary" type="submit"
                   id="breakdown-trigger"
                   hx-post="/assignments/{{ a.id }}/breakdown"
                   hx-target="#breakdown-body"
