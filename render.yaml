@@ -19,3 +19,5 @@ services:
         sync: false
       - key: GROQ_API_KEY
         sync: false
+      - key: ASK_COURSE_ENABLED
+        value: "1"
