@@ -481,6 +481,18 @@ Green — after adding the background function, updating the route and the templ
 
 ![Background content sync tests passing — 3 green passes](docs/test-evidence/bgcontentsync-green.png)
 
+**Layer 36 — live, self-updating sync notice**
+
+The syncing notice no longer tells the user to refresh. The notice is rendered from a shared `_sync_notice.html` partial; in the syncing state it carries an HTMX self-poll (`hx-get` to a new `/courses/{id}/sync-status` endpoint, `hx-trigger="load delay:3s"`, `hx-swap="outerHTML"`) and shows animated dots. The status endpoint re-renders the same partial: while the course's `last_content_synced_at` has not advanced past the baseline captured when Sync was pressed it returns the still-polling fragment; once it has, it returns a "ready" fragment with no poll hook, so the notice swaps itself in place and stops — the page becomes usable with no manual refresh. The baseline travels as URL-safe epoch seconds (not an ISO string, whose `+` would be read as a space), and naive-UTC stored times are compared as UTC. The course page also gains a "← All courses" back link. Tested with in-memory SQLite, StaticPool, and the feature flag; no Neon required.
+
+Red — `/sync-status` route absent, notice still says "Refresh to see it" with no dots, no back link:
+
+![Live sync notice tests failing — 5 red failures](docs/test-evidence/synclive-red.png)
+
+Green — after adding the status endpoint, the partial with polling + dots, the helpers, and the back link:
+
+![Live sync notice tests passing — 5 green passes](docs/test-evidence/synclive-green.png)
+
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
 ## Environment variables

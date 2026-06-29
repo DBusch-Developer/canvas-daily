@@ -79,6 +79,44 @@ def _ask_course_enabled() -> bool:
     return os.environ.get("ASK_COURSE_ENABLED", "").lower() in ("1", "true", "yes")
 
 
+def _utc_epoch(dt) -> float:
+    """Epoch seconds for a stored timestamp, treating naive values as UTC.
+
+    The app stores naive-UTC times (see _utcnow), so a naive datetime's
+    .timestamp() would otherwise be misread as local time.
+    """
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.timestamp()
+
+
+def _sync_baseline(course) -> str:
+    """Epoch seconds of the course's last content sync, or "" if never synced.
+
+    URL-safe (digits and a dot) so it survives the query string the syncing
+    notice polls with — unlike an ISO timestamp, whose '+' becomes a space.
+    """
+    ts = course.last_content_synced_at
+    return str(_utc_epoch(ts)) if ts else ""
+
+
+def _content_synced_since(course, since: str) -> bool:
+    """True once the course's content sync has finished past the baseline.
+
+    The background sync stamps last_content_synced_at with a fresh time when it
+    completes, so the sync is done when that time is strictly newer than the
+    baseline captured when the user pressed Sync.
+    """
+    ts = course.last_content_synced_at
+    if ts is None:
+        return False
+    try:
+        baseline = float(since) if since else 0.0
+    except ValueError:
+        baseline = 0.0
+    return _utc_epoch(ts) > baseline
+
+
 def _owned_assignment_or_404(session, assignment_id, user):
     assignment = session.get(Assignment, assignment_id)
     if assignment is None or assignment.connection.user_id != user.id:
@@ -411,7 +449,23 @@ def create_app():
         return TEMPLATES.TemplateResponse(request, "course_chat.html",
                                           {"course": course, "question": None,
                                            "answer": None, "sources": [],
-                                           "syncing": bool(syncing)})
+                                           "syncing": bool(syncing),
+                                           "sync_baseline": _sync_baseline(course)})
+
+    @app.get("/courses/{course_id}/sync-status")
+    def sync_status(request: Request, course_id: int,
+                    since: str = "",
+                    session: Session = Depends(get_session)):
+        if not _ask_course_enabled():
+            raise HTTPException(status_code=404)
+        user = _current_user(request, session)
+        if user is None:
+            return RedirectResponse("/login", status_code=303)
+        course = _owned_course_or_404(session, course_id, user)
+        done = _content_synced_since(course, since)
+        return TEMPLATES.TemplateResponse(request, "_sync_notice.html",
+                                          {"course": course, "syncing": not done,
+                                           "sync_baseline": _sync_baseline(course)})
 
     @app.post("/courses/{course_id}/ask")
     def course_ask(request: Request, course_id: int,
