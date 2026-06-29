@@ -3,8 +3,8 @@
    hx-get="/courses/{{ course.id }}/sync-status?since={{ sync_baseline }}"
    hx-trigger="load delay:3s"
    hx-swap="outerHTML">
-  Syncing course content in the background — this can take a minute for large courses.
-  It will appear here automatically when it's ready.<span class="sync-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+  Syncing course content in the background<span class="sync-dots" aria-hidden="true"><span></span><span></span><span></span></span> — this can take a minute for large courses.
+  It will appear here automatically when it's ready.
 </p>
 {% elif course.last_content_synced_at %}
 <p id="sync-notice" class="muted">Synced ✓ — ready to ask. Last synced {{ course.last_content_synced_at }}</p>
