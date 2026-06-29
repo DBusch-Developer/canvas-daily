@@ -36,6 +36,18 @@ def test_classify_returns_parallel_booleans():
     assert out == [True, False, True]
 
 
+def test_classify_accepts_object_wrapped_array():
+    # Groq's json_object mode (which the system prompt now asks for) returns the
+    # array wrapped in an object — the real production path. The parser unwraps it.
+    def handler(request):
+        return httpx.Response(200, json={
+            "choices": [{"message": {"content": json.dumps({"result": [True, False]})}}]
+        })
+    courses = [{"name": "CSA250 (22255)", "has_assignments": True},
+               {"name": "Lunch Brunch", "has_assignments": False}]
+    assert classify_courses(courses, _client(handler), "k") == [True, False]
+
+
 def test_classify_empty_list_makes_no_call():
     def boom(request):  # must not be called
         raise AssertionError("no Groq call for an empty list")

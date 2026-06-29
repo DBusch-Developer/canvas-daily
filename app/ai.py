@@ -221,9 +221,9 @@ CLASSIFY_SYSTEM_PROMPT = (
     "You are given a numbered list of courses, each with its name and whether it "
     "currently has any graded assignments. Judge primarily from the name; the "
     "assignment signal is secondary.\n"
-    "Respond with a single JSON array of booleans and nothing else — exactly one "
-    "entry per course, in the same order: true if it is a real class, false if it "
-    "is an extra."
+    "Respond with a single JSON object and nothing else: one key \"result\" whose "
+    "value is a JSON array of booleans — exactly one entry per course, in the same "
+    "order: true if it is a real class, false if it is an extra."
 )
 
 
@@ -266,7 +266,7 @@ def classify_courses(courses, client, api_key):
                 or not all(isinstance(x, bool) for x in data)):
             raise ValueError("expected a JSON array of booleans, one per course")
     except (ValueError, TypeError) as exc:
-        logger.warning("Course classification returned invalid JSON")
+        logger.warning("Course classification response did not match expected format")
         raise AIError("Course classification could not be completed.") from exc
     return data
 

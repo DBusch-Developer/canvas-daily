@@ -515,7 +515,7 @@ Red — `classify_courses` does not exist yet, so the whole module fails to impo
 
 Green — after adding `classify_courses` with its JSON-array parsing and clean failure handling:
 
-![Course classifier tests passing — 5 green passes](docs/test-evidence/courseclassify-green.png)
+![Course classifier tests passing — 6 green passes](docs/test-evidence/courseclassify-green.png)
 
 How these are made: `python tools/run_to_html.py <label> <pytest target>` runs pytest with color forced on and renders the output to a terminal-styled HTML page; a headless browser screenshots that page to a PNG. Same command for every layer, so red and green get documented as we go.
 
