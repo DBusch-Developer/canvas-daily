@@ -7,7 +7,7 @@ from sqlmodel import Session, SQLModel, select
 
 from app.canvas import fetch_courses
 from app.db import make_engine
-from app.models import Assignment, Connection, User
+from app.models import Assignment, Connection, Course, User
 from app.sync import run_daily_sync, sync_connection
 
 pytestmark = pytest.mark.skipif(
@@ -130,6 +130,22 @@ def test_sync_upserts_without_duplicating(session):
     ).all()
     assert len(stored) == 1
     assert stored[0].name == "New name"
+
+
+def test_sync_records_has_assignments_per_course(session):
+    user = a_user(session, "hasassign@x.com")
+    connection = a_connection(session, user.id)
+    courses = [
+        (1, [assignment_json(101, "Essay")]),
+        (2, []),
+    ]
+    sync_connection(session, connection, client_for(canvas_handler(courses)))
+    courses_stored = session.exec(
+        select(Course).where(Course.connection_id == connection.id)
+    ).all()
+    by_cid = {c.canvas_course_id: c for c in courses_stored}
+    assert by_cid[1].has_assignments is True
+    assert by_cid[2].has_assignments is False
 
 
 def test_run_daily_sync_covers_every_connection(session):

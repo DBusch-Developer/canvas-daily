@@ -25,10 +25,10 @@ def _now():
 def sync_connection(session, connection, client):
     """Fetch and store every assignment across one connection's courses."""
     for course in fetch_courses(connection.base_url, connection.access_token, client):
-        _upsert_course(session, connection.id, course)
         parsed_list = fetch_assignments(
             connection.base_url, connection.access_token, course["id"], client
         )
+        _upsert_course(session, connection.id, course, has_assignments=bool(parsed_list))
         for parsed in parsed_list:
             _upsert(session, connection.id, parsed,
                     course.get("code") or "", course.get("time_zone") or "")
@@ -67,7 +67,7 @@ def _is_token_rejection(exc):
     )
 
 
-def _upsert_course(session, connection_id, course):
+def _upsert_course(session, connection_id, course, has_assignments=False):
     """Insert or update a Course row keyed on (connection_id, canvas_course_id)."""
     existing = session.exec(
         select(Course).where(
@@ -80,6 +80,7 @@ def _upsert_course(session, connection_id, course):
         canvas_course_id=course["id"],
     )
     target.name = course["name"]
+    target.has_assignments = has_assignments
     session.add(target)
 
 
