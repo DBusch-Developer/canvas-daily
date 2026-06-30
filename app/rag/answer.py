@@ -20,12 +20,9 @@ TEMPERATURE = 0  # deterministic: the same question gives the same grounded answ
 REFUSAL = "I don't know based on the provided course documents."
 
 SYSTEM_PROMPT = (
-    "You answer a student's question using ONLY the provided numbered course "
-    "documents. Respond with a single JSON object and nothing else, with two keys:\n"
-    '  "answer": your answer, drawn only from the documents. If the answer is not in '
-    f'them, set this to exactly: "{REFUSAL}"\n'
-    '  "used": a JSON array of the document numbers you actually drew the answer '
-    "from (empty if you could not answer). Cite a number only if you used it.\n"
+    "You answer a student's question using ONLY the provided course documents. "
+    "If the answer is not in them, reply with exactly this and nothing else:\n"
+    f"{REFUSAL}\n"
     "Never invent citations, source titles, or URLs. Be concise and direct."
 )
 
@@ -79,7 +76,6 @@ def answer_question(question, chunks, client):
     payload = {
         "model": GROQ_MODEL,
         "temperature": TEMPERATURE,
-        "response_format": {"type": "json_object"},
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
@@ -98,19 +94,8 @@ def answer_question(question, chunks, client):
         return {"answer": "Something went wrong generating the answer. Please try again.",
                 "sources": sources, "error": "failed"}
 
-    content = resp.json()["choices"][0]["message"]["content"].strip()
-    try:
-        data = json.loads(content)
-        answer = str(data["answer"]).strip()
-    except (ValueError, TypeError, KeyError):
-        # Model didn't return the expected JSON — show the raw reply and every
-        # retrieved document rather than dropping sources entirely.
-        return {"answer": content, "sources": sources}
-    if answer == REFUSAL:
-        # The answer isn't in the documents — surface the closest materials as
-        # "where to look" recommendations instead of a dead end with no sources.
-        return {"answer": REFUSAL, "sources": sources}
-    # Filter to the cited sources; if the model cited nothing usable, fall back
-    # to every retrieved source rather than showing none.
-    return {"answer": answer,
-            "sources": _cited_sources(chunks, data.get("used")) or sources}
+    answer = resp.json()["choices"][0]["message"]["content"].strip()
+    # Plain-prose answers — forcing the answer into JSON made Groq reject long
+    # answers. Show every retrieved document as the source; on a refusal these
+    # become the "where to look" recommendations via the refused flag in the route.
+    return {"answer": answer, "sources": sources}
