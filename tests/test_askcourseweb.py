@@ -213,6 +213,8 @@ def test_sync_then_ask_renders_answer_with_sources(engine, monkeypatch):
                        data={"question": "late work policy"})
     assert resp.status_code == 200
     body = resp.text
+    # The asked question stays visible alongside the answer.
+    assert "late work policy" in body
     # Answer text must appear.
     assert "10 percent" in body
     # Syllabus source link must appear.

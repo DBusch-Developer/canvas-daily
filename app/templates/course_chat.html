@@ -15,6 +15,7 @@
 
 {% if answer %}
 <section class="answer">
+  {% if question %}<p class="asked-question"><strong>You asked:</strong> {{ question }}</p>{% endif %}
   <h2>Answer</h2>
   <p>{{ answer }}</p>
   {% if refused %}
