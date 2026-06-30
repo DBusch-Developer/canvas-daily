@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL = "llama-3.3-70b-versatile"
-TEMPERATURE = 0.1
+TEMPERATURE = 0  # deterministic: the same question gives the same grounded answer
 REFUSAL = "I don't know based on the provided course documents."
 
 SYSTEM_PROMPT = (
@@ -110,4 +110,7 @@ def answer_question(question, chunks, client):
         # The answer isn't in the documents — surface the closest materials as
         # "where to look" recommendations instead of a dead end with no sources.
         return {"answer": REFUSAL, "sources": sources}
-    return {"answer": answer, "sources": _cited_sources(chunks, data.get("used"))}
+    # Filter to the cited sources; if the model cited nothing usable, fall back
+    # to every retrieved source rather than showing none.
+    return {"answer": answer,
+            "sources": _cited_sources(chunks, data.get("used")) or sources}
